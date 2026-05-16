@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SBB × Roehampton — Impact Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.06;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 80px 40px 60px;
+      border-bottom: 1px solid var(--rule);
+      max-width: 960px;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 9vw, 100px);
+      line-height: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .hero-sub {
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.5);
+      line-height: 2;
+      max-width: 600px;
+    }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .stat-box {
+      background: var(--black);
+      padding: 40px 32px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 5vw, 64px);
+      line-height: 1;
+      color: var(--orange);
+    }
+
+    .stat-note {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.2);
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      padding: 80px 40px;
+      border-bottom: 1px solid var(--rule);
+      max-width: 960px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 0.9;
+      margin-bottom: 40px;
+    }
+
+    /* ── VIDEO GRID ── */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--rule);
+    }
+
+    .video-item {
+      background: var(--black);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .video-item:hover { background: rgba(255,255,255,0.03); }
+
+    .video-num {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+
+    .video-views {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      line-height: 1;
+      color: var(--white);
+    }
+
+    .video-views.mega { color: var(--orange); }
+
+    .video-platform {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+    }
+
+    .video-link {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: var(--orange);
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,68,0,0.3);
+      display: inline-block;
+      padding-bottom: 2px;
+      margin-top: 4px;
+    }
+
+    /* ── TOTAL BAR ── */
+    .total-bar {
+      background: var(--orange);
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .total-bar-label {
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.8);
+      text-transform: uppercase;
+    }
+
+    .total-bar-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 64px;
+      line-height: 1;
+      color: var(--white);
+    }
+
+    /* ── ARGUMENT SECTION ── */
+    .argument-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--rule);
+      margin-top: 40px;
+    }
+
+    .argument-box {
+      background: var(--black);
+      padding: 32px;
+    }
+
+    .argument-box h4 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: var(--orange);
+    }
+
+    .argument-box p {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.9;
+    }
+
+    .argument-box strong { color: var(--white); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+    }
+
+    .footer-contact {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.3);
+    }
+
+    @media (max-width: 768px) {
+      .hero, .section { padding: 60px 24px; }
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .video-grid { grid-template-columns: repeat(2, 1fr); }
+      .argument-grid { grid-template-columns: 1fr; }
+      .total-bar { padding: 24px; }
+      .total-bar-num { font-size: 48px; }
+      footer { padding: 32px 24px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Impact Report — 2024/2025</div>
+    <h1 class="hero-title">SBB & DYT<br>× Roehampton.</h1>
+    <p class="hero-sub">This report outlines the measurable impact Simply British Ballers and the DYT Breakfast Club have generated for Roehampton Sport & Fitness Centre through organic content, community growth and direct foot traffic.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stat-box">
+      <div class="stat-label">Total Content Views</div>
+      <div class="stat-value">9.6M</div>
+      <div class="stat-note">Across tracked Roehampton content</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Combined Following</div>
+      <div class="stat-value">851K</div>
+      <div class="stat-note">TikTok + Instagram</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Biggest Single Video</div>
+      <div class="stat-value">4M+</div>
+      <div class="stat-note">Views — filmed at Roehampton</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Videos Tracked</div>
+      <div class="stat-value">16</div>
+      <div class="stat-note">This is not the full catalogue</div>
+    </div>
+  </div>
+
+  <!-- PLATFORM REACH -->
+  <div class="section">
+    <div class="section-label">Platform Reach</div>
+    <h2 class="section-title">The Audience<br>Behind the Numbers.</h2>
+
+    <div class="argument-grid">
+      <div class="argument-box">
+        <h4>SBB TikTok</h4>
+        <p><strong>740,000 followers.</strong> The largest UK basketball platform on TikTok. Every session video, every court clip, every moment filmed at Roehampton reaches this audience directly — and through shares, comments and algorithm distribution, far beyond it.</p>
+      </div>
+      <div class="argument-box">
+        <h4>SBB Instagram</h4>
+        <p><strong>110,000 followers.</strong> The UK basketball community's most engaged Instagram platform. Roehampton has appeared in content across Reels, Stories and posts reaching this audience consistently over multiple years.</p>
+      </div>
+      <div class="argument-box">
+        <h4>DYT Breakfast Club</h4>
+        <p>A growing weekly community session hosted at Roehampton. Every session is filmed, posted and shared. Attendees include <strong>content creators, influencers and the most prominent figures in British basketball</strong> — extending reach well beyond SBB's own following.</p>
+      </div>
+      <div class="argument-box">
+        <h4>The UK Basketball Market</h4>
+        <p>The UK basketball community is <strong>tight-knit and highly engaged.</strong> SBB and DYT collectively reach the majority of that market. When we post about Roehampton, the community sees it. When influential attendees post, their audiences see it too.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO BREAKDOWN -->
+  <div class="section">
+    <div class="section-label">Content Breakdown</div>
+    <h2 class="section-title">Roehampton on<br>Our Platforms.</h2>
+    <p style="font-size:11px;letter-spacing:0.2em;color:rgba(255,255,255,0.35);margin-bottom:32px;text-transform:uppercase;">16 tracked videos. All filmed at Roehampton Sport & Fitness Centre.</p>
+
+    <div class="video-grid">
+      <div class="video-item">
+        <div class="video-num">Video 01 — TikTok</div>
+        <div class="video-views">110K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1g7Nu/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 02 — TikTok</div>
+        <div class="video-views">366K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt14sTo/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 03 — TikTok</div>
+        <div class="video-views">261K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1W7bv/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 04 — TikTok</div>
+        <div class="video-views">619K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1bHkm/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 05 — TikTok</div>
+        <div class="video-views">565K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1cSvg/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 06 — TikTok</div>
+        <div class="video-views mega">2.1M</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt14LbH/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 07 — TikTok</div>
+        <div class="video-views">453K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1mNdY/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 08 — TikTok</div>
+        <div class="video-views">206K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1X8PN/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 09 — TikTok</div>
+        <div class="video-views">134K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt13w7o/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 10 — TikTok</div>
+        <div class="video-views mega">4M</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1tK89/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 11 — TikTok</div>
+        <div class="video-views">235K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt13Tc5/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 12 — TikTok</div>
+        <div class="video-views">122K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1ncPb/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 13 — TikTok</div>
+        <div class="video-views">209K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://vm.tiktok.com/ZNRt1CMx8/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 14 — Instagram</div>
+        <div class="video-views">119K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://www.instagram.com/reel/C2YExaPNHMQ/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 15 — Instagram</div>
+        <div class="video-views">66K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://www.instagram.com/reel/ChaJ6a9AzDA/" class="video-link" target="_blank">Watch →</a>
+      </div>
+      <div class="video-item">
+        <div class="video-num">Video 16 — YouTube</div>
+        <div class="video-views">4.7K</div>
+        <div class="video-platform">Views</div>
+        <a href="https://youtu.be/Sg8Z4vzSq2k" class="video-link" target="_blank">Watch →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOTAL -->
+  <div class="total-bar">
+    <div class="total-bar-label">Total tracked views featuring Roehampton Sport & Fitness Centre</div>
+    <div class="total-bar-num">9,640,964</div>
+  </div>
+
+  <!-- THE CASE -->
+  <div class="section">
+    <div class="section-label">The Partnership Case</div>
+    <h2 class="section-title">Why This<br>Makes Sense.</h2>
+
+    <div class="argument-grid">
+      <div class="argument-box">
+        <h4>Zero Opportunity Cost</h4>
+        <p>DYT Breakfast Club sessions run at <strong>7:30–9:30 AM</strong> — hours that generate no bookings for the facility. Roehampton loses no existing revenue by partnering with us. Every session we hold there during those hours is revenue and exposure they would not otherwise receive.</p>
+      </div>
+      <div class="argument-box">
+        <h4>Direct Revenue Already Generated</h4>
+        <p>On pay-to-play, DYT brings <strong>10+ people per session at £5 each</strong>. That is direct, immediate revenue during dead hours. As the DYT community grows, those numbers grow — more people, more sessions, more revenue flowing directly to Roehampton.</p>
+      </div>
+      <div class="argument-box">
+        <h4>Proven Indirect Impact</h4>
+        <p>The price of pay-to-play at Roehampton has risen from <strong>£3 to £5</strong> over the period SBB has been creating content there. Demand has increased. That increased demand did not come from nowhere — content driving millions of people to ask where this court is has contributed directly to that growth.</p>
+      </div>
+      <div class="argument-box">
+        <h4>The Long-Term Vision</h4>
+        <p>DYT is growing. The influential figures of British basketball attend these sessions. As DYT scales, <strong>Roehampton becomes the permanent home of UK basketball's most prominent community.</strong> The marketing value of that association is not measurable in a £65/hour court hire fee.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-logo">SBB. × DYT.</div>
+      <div class="footer-contact" style="margin-top:8px;">team@simplybritishballers.com</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:10px;letter-spacing:0.3em;color:rgba(255,255,255,0.2);text-transform:uppercase;">Simply British Ballers</div>
+      <div style="font-size:10px;letter-spacing:0.3em;color:rgba(255,255,255,0.2);text-transform:uppercase;margin-top:4px;">DYT Breakfast Club</div>
+    </div>
+  </footer>
+
+</body>
+</html>
