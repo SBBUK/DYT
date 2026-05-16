@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYT — Do Your Ting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --grey: rgba(255,255,255,0.45);
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    /* ── GRAIN ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .nav-cta {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 10px 20px;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { background: var(--orange); border-color: var(--orange); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 80px 40px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('images/film/IMG_8177.jpg');
+      background-size: cover;
+      background-position: center 40%;
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(8,8,8,0.4) 0%,
+        rgba(8,8,8,0.2) 30%,
+        rgba(8,8,8,0.7) 70%,
+        rgba(8,8,8,0.95) 100%
+      );
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+    .hero-tag {
+      font-size: 11px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 14vw, 160px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      margin-bottom: 32px;
+    }
+
+    .hero-sub {
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--orange);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 16px 36px;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-outline {
+      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 16px 36px;
+      margin-left: 16px;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--white); }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+    }
+
+    /* ── SHARED SECTION STYLES ── */
+    section { padding: 100px 40px; }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 8vw, 100px);
+      line-height: 0.9;
+      letter-spacing: -0.01em;
+      margin-bottom: 40px;
+    }
+
+    .rule { width: 100%; height: 1px; background: var(--rule); }
+
+    /* ── WHAT IS DYT ── */
+    .about { background: var(--black); }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 60px;
+      align-items: start;
+    }
+
+    .about-text p {
+      font-size: 14px;
+      line-height: 1.9;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 20px;
+    }
+
+    .about-text strong { color: var(--white); }
+
+    .rules-list { margin-top: 40px; }
+
+    .rule-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .rule-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      color: var(--orange);
+      line-height: 1;
+      flex-shrink: 0;
+      width: 40px;
+    }
+
+    .rule-text {
+      padding-top: 8px;
+    }
+
+    .rule-text h4 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .rule-text p {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      margin: 0;
+    }
+
+    /* ── SESSION ── */
+    .session { background: #0d0d0d; }
+
+    .session-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 60px;
+    }
+
+    .session-details { }
+
+    .session-row {
+      display: flex;
+      gap: 0;
+      margin-bottom: 48px;
+    }
+
+    .session-col { flex: 1; }
+
+    .session-col-label {
+      font-size: 9px;
+      letter-spacing: 0.45em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .session-col-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+
+    .session-col-sub {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .spots-block {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      margin: 40px 0;
+    }
+
+    .spots-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 120px;
+      line-height: 0.85;
+      color: var(--orange);
+      letter-spacing: -0.02em;
+    }
+
+    .spots-text h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .spots-text p {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+    }
+
+    .session-how h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 0.05em;
+      margin-bottom: 24px;
+    }
+
+    .how-step {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .how-step-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--orange);
+      flex-shrink: 0;
+      width: 28px;
+    }
+
+    .how-step p {
+      font-size: 12px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.55);
+      padding-top: 4px;
+    }
+
+    /* ── COMMUNITY ── */
+    .community { background: var(--black); padding-bottom: 0; }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 60px;
+    }
+
+    .photo-item {
+      aspect-ratio: 3/4;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 0.4s ease;
+      display: block;
+    }
+
+    .photo-item:hover img { transform: scale(1.04); }
+
+    .photo-item.tall { grid-row: span 2; aspect-ratio: auto; }
+    .photo-mobile-companion { display: none; }
+    .img-mobile-only { display: none; width: 100%; height: 100%; object-fit: cover; }
+    .img-desktop-only { display: block; }
+
+    /* ── CLOTHING ── */
+    .clothing { background: #0a0a0a; }
+
+    .clothing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      margin-top: 60px;
+    }
+
+    .clothing-item {
+      aspect-ratio: 2/3;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .clothing-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      transition: transform 0.4s ease;
+      display: block;
+    }
+
+    .clothing-item:hover img { transform: scale(1.05); }
+
+    .clothing-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(8,8,8,0.7) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .clothing-cta {
+      text-align: center;
+      margin-top: 60px;
+    }
+
+    /* ── JOIN ── */
+    .join {
+      background: var(--black);
+      text-align: center;
+      padding: 120px 40px;
+    }
+
+    .join .section-title { font-size: clamp(60px, 10vw, 120px); }
+
+    .join-sub {
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      margin-bottom: 60px;
+    }
+
+    .join-form {
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .join-form input {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      padding: 16px 20px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+
+    .join-form input::placeholder { color: rgba(255,255,255,0.25); }
+    .join-form input:focus { border-color: rgba(255,255,255,0.4); }
+
+    .join-form button {
+      background: var(--orange);
+      border: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      padding: 18px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      width: 100%;
+    }
+
+    .join-form button:hover { opacity: 0.85; }
+
+    .join-note {
+      margin-top: 20px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #050505;
+      padding: 60px 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: right;
+    }
+
+    .footer-links a {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.3);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--white); }
+
+    .footer-tag {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.15);
+      text-transform: uppercase;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      nav { padding: 20px 16px; }
+      .nav-cta { padding: 8px 12px; font-size: 10px; letter-spacing: 0.15em; }
+
+      section { padding: 72px 24px; }
+
+      /* Hero: better crop + reduced height */
+      .hero { min-height: 85vh; padding: 60px 24px 80px; }
+      .hero-bg { background-position: 70% center; }
+      .hero-title { font-size: clamp(64px, 18vw, 120px); }
+      .scroll-hint { display: none; }
+
+      /* About */
+      .about-grid { grid-template-columns: 1fr; gap: 48px; }
+
+      /* Session */
+      .session-inner { grid-template-columns: 1fr; gap: 48px; }
+      .session-row { flex-wrap: wrap; gap: 32px; }
+      .session-col-value { font-size: 38px; }
+      .spots-num { font-size: 120px; }
+      .spots-text h3 { font-size: 24px; }
+
+      /* Community photo grid — disable tall span on mobile, fill last row */
+      .photo-grid { grid-template-columns: repeat(2, 1fr); }
+      .photo-item.tall { grid-row: span 1; }
+      .photo-grid .photo-item:last-child { grid-column: span 2; }
+      .photo-mobile-companion { display: block; }
+      .photo-hide-mobile { display: none !important; }
+      .photo-mobile-full { grid-column: span 2 !important; aspect-ratio: 16/9 !important; }
+      .photo-mobile-full img { transform: scale(1.12); }
+      .img-mobile-only { display: block !important; }
+      .img-desktop-only { display: none !important; }
+
+      /* Clothing */
+      .clothing-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Leaderboard teaser — override the inline-styled grid */
+      #leaderboardTeaser { padding-left: 24px !important; padding-right: 24px !important; }
+      #homeLbContent > div {
+        grid-template-columns: 44px 1fr auto !important;
+        gap: 12px !important;
+        padding: 16px 0 !important;
+      }
+      #homeLbContent > div > div:first-child { font-size: 28px !important; }
+      #homeLbContent > div > div:last-child > div:first-child { font-size: 36px !important; }
+
+      footer { flex-direction: column; gap: 32px; text-align: center; }
+      .footer-links { text-align: center; }
+
+      .btn-outline { margin-left: 0; margin-top: 12px; display: block; text-align: center; }
+      .hero-content .btn-primary { display: block; text-align: center; }
+      .hero-content .btn-outline { display: block; text-align: center; }
+    }
+
+    /* Extra-small screens */
+    @media (max-width: 480px) {
+      nav > div { gap: 8px; }
+      /* Hide the "DYT Family" nav link on very small screens to avoid overflow */
+      nav > div > a:nth-child(2) { display: none; }
+      .hero-title { font-size: clamp(56px, 20vw, 100px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">DYT.</a>
+    <div style="display:flex;gap:20px;align-items:center">
+      <a href="tracker.html" class="nav-cta" style="background:transparent;border-color:rgba(255,255,255,0.2);">My Sessions</a>
+      <a href="family.html" class="nav-cta" style="background:transparent;border-color:rgba(255,255,255,0.2);">DYT Family</a>
+      <a href="sessions.html" class="nav-cta">Get a Spot →</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-tag">Do Your Ting — London</div>
+      <h1 class="hero-title">DYT<br>Breakfast<br>Club.</h1>
+      <p class="hero-sub">For Hoopers. By Hoopers. DYT Family.</p>
+      <a href="sessions.html" class="btn-primary">Claim Your Spot</a>
+      <a href="#about" class="btn-outline">What is DYT?</a>
+    </div>
+    <div class="scroll-hint">Scroll</div>
+  </section>
+
+  <!-- WHAT IS DYT -->
+  <section class="about" id="about">
+    <div class="section-label">What is DYT</div>
+    <h2 class="section-title">Do Your<br>Ting.</h2>
+    <div class="rule"></div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <p>DYT is a <strong>basketball community workout</strong> built for hoopers who want to get better — <strong>together</strong>. No coaches, no teams, no pressure. Just you, the court, and the people next to you.</p>
+        <p>We bring hoopers <strong>together</strong> regularly to <strong>work hard, push each other</strong> and build something real. The sessions are intense, competitive and community-led — and there is nothing else like it for basketball in the UK.</p>
+        <p><strong>Everyone</strong> is equal on the court. <strong>Everyone</strong> sets drills. <strong>Everyone</strong> earns their spot.</p>
+      </div>
+
+      <div class="rules-list">
+        <div class="rule-item">
+          <div class="rule-num">1</div>
+          <div class="rule-text">
+            <h4>Never Fear Failure.</h4>
+            <p>You miss, you learn, you go again.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">2</div>
+          <div class="rule-text">
+            <h4>If One Falls We All Fall.</h4>
+            <p>The community lifts <strong>together</strong> or not at all.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">3</div>
+          <div class="rule-text">
+            <h4>Vulnerability is Power.</h4>
+            <p>Leave the ego at the door.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">4</div>
+          <div class="rule-text">
+            <h4>Run from Comfort.</h4>
+            <p>Every session should hurt a little.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEXT SESSION -->
+  <section class="session" id="session">
+    <div class="section-label">Next Session</div>
+    <h2 class="section-title" id="homeSessionName">DYT Breakfast<br>Club.</h2>
+    <div class="rule"></div>
+
+    <div class="session-inner">
+      <div class="session-details">
+        <div class="session-row">
+          <div class="session-col">
+            <div class="session-col-label">Day</div>
+            <div class="session-col-value" id="homeSessionDate">19/05</div>
+          </div>
+          <div class="session-col">
+            <div class="session-col-label">Time</div>
+            <div class="session-col-value" id="homeSessionTime">7:00 AM</div>
+          </div>
+          <div class="session-col">
+            <div class="session-col-label">Location</div>
+            <div class="session-col-value" id="homeSessionLocation" style="font-size:38px;">Roehampton</div>
+            <div class="session-col-sub">Sport & Fitness Centre</div>
+          </div>
+        </div>
+
+        <div class="rule"></div>
+
+        <div class="spots-block">
+          <div class="spots-num" id="homeSessionSpots">10</div>
+          <div class="spots-text">
+            <h3 id="homeSessionSpotsLabel">Spots<br>Available.</h3>
+            <p>First to respond. <strong>No exceptions.</strong></p>
+          </div>
+        </div>
+
+        <a href="sessions.html" class="btn-primary">Claim Your Spot →</a>
+      </div>
+
+      <div class="session-how">
+        <h3>How a Session Works.</h3>
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <p><strong>Buy-In Set.</strong> <strong>Everyone</strong> does agility lines and sprints before we start. No exceptions. You earn your place.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <p><strong>Someone sets a drill.</strong> We run it. Winners set the punishment for losers — sprints, burpees, defensive slides.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <p><strong>Lose the punishment?</strong> You get another one. The standard never drops.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">4</div>
+          <p><strong>Everyone rotates.</strong> Every hooper sets a drill. No coaches. No hierarchy. Just the community.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">5</div>
+          <p><strong>Game time.</strong> 1v1, 3v3 or 5v5 to finish — depending on numbers and who can stay.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+  <section class="community" id="community">
+    <div class="section-label">The Community</div>
+    <h2 class="section-title">Built on<br>the Court.</h2>
+    <div class="rule"></div>
+
+    <div class="photo-grid">
+      <div class="photo-item tall">
+        <img src="images/film/IMG_8157-2.jpg" alt="DYT Community">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8156.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8178.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8158.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8164.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8176.jpg" alt="DYT Session" class="img-desktop-only">
+        <img src="images/film/IMG_8358.jpg" alt="DYT Session" class="img-mobile-only" style="object-position: 92% center;">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8179.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item">
+        <img src="images/film/IMG_8351.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item photo-hide-mobile" style="aspect-ratio: unset; align-self: stretch;">
+        <img src="images/film/IMG_8358.jpg" alt="DYT Session" style="object-position: 92% center;">
+      </div>
+      <div class="photo-item photo-mobile-companion photo-mobile-full">
+        <img src="images/film/IMG_8176.jpg" alt="DYT Session">
+      </div>
+      <div class="photo-item" style="grid-column: span 2; aspect-ratio: 4/3;">
+        <img src="images/film/IMG_8359.jpg" alt="DYT Session" style="object-position: center center;">
+      </div>
+    </div>
+  </section>
+
+  <!-- DYT FAMILY TEASER -->
+  <section style="background:#080808;padding:0;position:relative;overflow:hidden;height:420px;">
+
+    <!-- auto-scrolling photo strip -->
+    <div style="overflow:hidden;width:100%;height:420px;">
+      <div id="familyStrip" style="display:flex;gap:0;width:max-content;height:420px;animation:stripScroll 35s linear infinite;">
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8155.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8158.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8161.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8164.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8167.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8170.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8173.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8176.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8351.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8358.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8364.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8179.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <!-- duplicate for seamless loop -->
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8155.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8158.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8161.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8164.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8167.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8170.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8173.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8176.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8351.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8358.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8364.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+        <div style="flex-shrink:0;width:280px;height:420px;overflow:hidden;"><img src="images/film/IMG_8179.jpg" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;"></div>
+      </div>
+    </div>
+
+    <!-- overlay -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,8,8,0.55) 0%,rgba(8,8,8,0.3) 40%,rgba(8,8,8,0.8) 100%);pointer-events:none;"></div>
+
+    <!-- fade edges -->
+    <div style="position:absolute;top:0;left:0;bottom:0;width:120px;background:linear-gradient(to right,rgba(8,8,8,0.9),transparent);pointer-events:none;"></div>
+    <div style="position:absolute;top:0;right:0;bottom:0;width:120px;background:linear-gradient(to left,rgba(8,8,8,0.9),transparent);pointer-events:none;"></div>
+
+    <!-- text overlay -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;pointer-events:none;">
+      <div style="font-size:10px;letter-spacing:0.5em;color:var(--orange);text-transform:uppercase;">Session Photos</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,10vw,120px);line-height:0.88;letter-spacing:-0.01em;">DYT Family.</div>
+      <div style="font-size:11px;letter-spacing:0.3em;color:rgba(255,255,255,0.45);text-transform:uppercase;">Find your photo. Download it. Rep the community.</div>
+    </div>
+
+    <!-- CTA -->
+    <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);">
+      <a href="family.html" class="btn-primary" style="display:inline-block;">View All Photos →</a>
+    </div>
+
+  </section>
+
+  <style>
+    @keyframes stripScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    #familyStrip:hover { animation-play-state: paused; }
+    @media (max-width: 768px) {
+      #familyStrip > div { width: 200px !important; height: 300px !important; }
+      #familyStrip > div img { height: 300px !important; }
+      #familyStrip, #familyStrip { height: 300px !important; animation-duration: 20s; }
+      #familyStrip { height: 300px !important; }
+    }
+  </style>
+
+  <!-- LEADERBOARD TEASER -->
+  <section id="leaderboardTeaser" style="padding:80px 40px;border-bottom:1px solid rgba(255,255,255,0.1);">
+    <div style="font-size:10px;letter-spacing:0.5em;color:#FF4400;text-transform:uppercase;margin-bottom:16px;">Live Rankings</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px;flex-wrap:wrap;gap:16px;">
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,80px);line-height:0.9;">The Board.</h2>
+      <a href="tracker.html" style="font-size:10px;letter-spacing:0.3em;color:rgba(255,255,255,0.4);text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:4px;">Full Leaderboard →</a>
+    </div>
+    <div id="homeLbContent">
+      <div style="font-size:11px;letter-spacing:0.25em;color:rgba(255,255,255,0.2);text-transform:uppercase;padding:20px 0;">Loading rankings...</div>
+    </div>
+  </section>
+
+  <script>
+    (async function() {
+      const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0uD0pUJomy00VfLc7HtkgsfuIWMBcVENzG44oR0w1LtFaU2qft4D127ozerO5b_IhaxpNgcJkyW3n/pub?output=csv';
+      const MILESTONES = [
+        { sessions: 10,  label: 'DYT Family' },
+        { sessions: 25,  label: 'Simply. T-Shirt' },
+        { sessions: 50,  label: 'Full Simply. Kit' },
+        { sessions: 100, label: 'Legendary Status' },
+      ];
+
+      function parseCSV(text) {
+        return text.trim().split('\n').map(line => {
+          const cols = []; let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            if (line[i] === '"') { inQ = !inQ; }
+            else if (line[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+            else { cur += line[i]; }
+          }
+          cols.push(cur.trim()); return cols;
+        });
+      }
+
+      try {
+        const res  = await fetch(CSV);
+        const text = await res.text();
+        const rows = parseCSV(text).slice(1);
+        const members = rows.map(r => ({
+          name: r[0] || '',
+          handle: '@' + (r[1] || '').toLowerCase().replace(/^@/, ''),
+          sessions: Math.round(parseFloat(r[2]) || 0)
+        })).filter(m => m.handle !== '@').sort((a, b) => b.sessions - a.sessions).slice(0, 5);
+
+        const el = document.getElementById('homeLbContent');
+        el.innerHTML = members.map((m, i) => {
+          const next = MILESTONES.find(ms => ms.sessions > m.sessions);
+          const cur  = [...MILESTONES].reverse().find(ms => ms.sessions <= m.sessions);
+          const prev = cur ? cur.sessions : 0;
+          const pct  = next ? Math.min(((m.sessions - prev) / (next.sessions - prev)) * 100, 100) : 100;
+          const needText = next ? `${next.sessions - m.sessions} to ${next.label}` : 'Legendary';
+
+          return `<div style="display:grid;grid-template-columns:60px 1fr auto;align-items:center;gap:24px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;line-height:1;color:${i < 3 ? '#FF4400' : 'rgba(255,255,255,0.12)'};">#${i+1}</div>
+            <div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.05em;margin-bottom:4px;">${m.name}</div>
+              <div style="font-size:10px;letter-spacing:0.2em;color:rgba(255,255,255,0.3);margin-bottom:10px;">${m.handle}</div>
+              <div style="height:2px;background:rgba(255,255,255,0.08);margin-bottom:6px;"><div style="height:100%;width:${pct}%;background:#FF4400;"></div></div>
+              <div style="font-size:9px;letter-spacing:0.25em;color:rgba(255,255,255,0.2);text-transform:uppercase;">${needText}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;">${m.sessions}</div>
+              <div style="font-size:9px;letter-spacing:0.3em;color:rgba(255,255,255,0.3);text-transform:uppercase;">Sessions</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch(e) { console.error('Leaderboard fetch error:', e); }
+    })();
+  </script>
+
+  <!-- CLOTHING -->
+  <section class="clothing" id="clothing">
+    <div class="section-label">The Kit</div>
+    <h2 class="section-title">Simply.<br>Clothing.</h2>
+    <div class="rule"></div>
+
+    <div class="clothing-grid">
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 2.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 3.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 4.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 5.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 6.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-50 7.jpg" alt="SIMPLY"></div>
+      <div class="clothing-item"><img src="images/PHOTO-2026-04-02-21-01-49 2.jpg" alt="SIMPLY"></div>
+    </div>
+
+    <div class="clothing-cta">
+      <p style="font-size:11px;letter-spacing:0.35em;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:28px;">Wear the kit. Rep the community.</p>
+      <a href="clothing.html" class="btn-primary">Culture is the Kit</a>
+    </div>
+  </section>
+
+  <!-- JOIN -->
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-logo">DYT.</div>
+      <div class="footer-tag" style="margin-top:8px;">By Hoopers. For Hoopers. DYT Family.</div>
+    </div>
+    <div class="footer-links">
+      <a href="#">@doyourtingg</a>
+      <a href="#">@sbb_uk</a>
+      <a href="family.html">DYT Family →</a>
+    </div>
+  </footer>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.textContent = 'You\'re on the list. ✓';
+      btn.style.background = '#222';
+      btn.style.letterSpacing = '0.1em';
+      e.target.querySelectorAll('input').forEach(i => i.disabled = true);
+    }
+  </script>
+
+  <script>
+    // ── Pull live session data from sheet ──
+    (async function() {
+      const SCRIPT = 'https://script.google.com/macros/s/AKfycbyvQ2X3SpLYfpdaDI4CtmPSDnIjOZSjZQAg1s9W9fZdLpxSs8l_M8zF4rJ9P-TT4Twg/exec';
+      try {
+        const res      = await fetch(`${SCRIPT}?action=sessions_list`);
+        const sessions = await res.json();
+        if (!Array.isArray(sessions)) return;
+
+        // Find the first live session, or fall back to the first soon session
+        const live = sessions.find(s => s.status === 'live') || sessions.find(s => s.status === 'soon');
+        if (!live) return;
+
+        document.getElementById('homeSessionDate').textContent  = live.date  || '—';
+        document.getElementById('homeSessionTime').textContent  = live.time  || '—';
+        const locEl = document.getElementById('homeSessionLocation');
+        if (locEl) locEl.textContent = (live.location || '').replace('Sport & Fitness Centre', '').trim() || live.location;
+
+        const spots = Math.max(0, live.maxSpots - live.confirmed);
+        document.getElementById('homeSessionSpots').textContent      = spots;
+        document.getElementById('homeSessionSpotsLabel').innerHTML   = spots === 0 ? 'Spots<br>Full.' : 'Spots<br>Available.';
+      } catch(e) {}
+    })();
+  </script>
+
+</body>
+</html>

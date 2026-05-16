@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYT — Session Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── NAV ── */
+    nav {
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 80px 40px 60px;
+      border-bottom: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: end;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 10vw, 120px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    .hero-sub {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    /* ── MILESTONES PREVIEW ── */
+    .milestone-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .milestone-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 16px 20px;
+      border: 1px solid var(--rule);
+    }
+
+    .milestone-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--orange);
+      flex-shrink: 0;
+      width: 60px;
+      line-height: 1;
+    }
+
+    .milestone-info h4 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .milestone-info p {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+    }
+
+    .milestone-badge {
+      margin-left: auto;
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,68,0,0.3);
+      color: var(--orange);
+    }
+
+    /* ── LOOKUP ── */
+    .lookup {
+      padding: 80px 40px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .lookup-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .lookup-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      margin-bottom: 40px;
+    }
+
+    .lookup-form {
+      display: flex;
+      gap: 0;
+      max-width: 500px;
+    }
+
+    .lookup-form input {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-right: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      padding: 16px 20px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .lookup-form input:focus { border-color: rgba(255,255,255,0.3); }
+    .lookup-form input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .lookup-form button {
+      background: var(--orange);
+      border: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 16px 28px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .lookup-form button:hover { opacity: 0.85; }
+
+    /* ── RESULT CARD ── */
+    .result { display: none; margin-top: 48px; }
+    .result.show { display: block; }
+
+    .result-card {
+      border: 1px solid var(--rule);
+      padding: 40px;
+      max-width: 700px;
+    }
+
+    .result-handle {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .result-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      line-height: 1;
+      margin-bottom: 32px;
+    }
+
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--rule);
+      margin-bottom: 40px;
+    }
+
+    .stat-box {
+      background: var(--black);
+      padding: 24px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: var(--white);
+    }
+
+    .stat-value.orange { color: var(--orange); }
+
+    /* ── PROGRESS BAR ── */
+    .progress-section { margin-bottom: 32px; }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+    }
+
+    .progress-target {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: var(--orange);
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--orange);
+      transition: width 1s ease;
+    }
+
+    .progress-sessions {
+      display: flex;
+      gap: 3px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .session-dot {
+      width: 8px;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+
+    .session-dot.done { background: var(--orange); }
+
+    /* ── MILESTONE ACHIEVED ── */
+    .milestone-achieved {
+      background: rgba(255,68,0,0.08);
+      border: 1px solid rgba(255,68,0,0.25);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .milestone-achieved-icon {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      color: var(--orange);
+      line-height: 1;
+    }
+
+    .milestone-achieved h4 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .milestone-achieved p {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── LEADERBOARD ── */
+    .leaderboard {
+      padding: 80px 40px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .lb-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .lb-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 7vw, 80px);
+      line-height: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .lb-sub {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    .lb-row {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .lb-rank {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      color: rgba(255,255,255,0.12);
+      line-height: 1;
+    }
+
+    .lb-rank.top { color: var(--orange); }
+
+    .lb-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .lb-handle {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 10px;
+    }
+
+    .lb-bar {
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 6px;
+    }
+
+    .lb-bar-fill { height: 100%; background: var(--orange); }
+
+    .lb-next {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+
+    .lb-sessions { text-align: right; }
+
+    .lb-count {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .lb-sessions-label {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      .leaderboard { padding-left: 24px; padding-right: 24px; }
+      .lb-row { grid-template-columns: 44px 1fr auto; gap: 16px; }
+      .lb-count { font-size: 36px; }
+    }
+
+    /* ── WALL ── */
+    .wall {
+      padding: 80px 40px;
+    }
+
+    .wall-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .wall-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 7vw, 80px);
+      line-height: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .wall-sub {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    .wall-tier {
+      margin-bottom: 48px;
+    }
+
+    .wall-tier-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .wall-tier-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: var(--orange);
+    }
+
+    .wall-tier-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .wall-tier-reward {
+      margin-left: auto;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .wall-members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .wall-member {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6);
+      transition: all 0.2s;
+      cursor: default;
+    }
+
+    .wall-member:hover {
+      border-color: var(--orange);
+      color: var(--white);
+    }
+
+    .wall-empty {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.15);
+      font-style: italic;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+    }
+
+    .footer-tag {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.15);
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      nav, .lookup, .wall, footer { padding-left: 24px; padding-right: 24px; }
+      .hero { grid-template-columns: 1fr; padding: 60px 24px; gap: 48px; }
+
+      /* Result card */
+      .result-card { padding: 24px; }
+      .result-name { font-size: 38px; }
+      .result-stats { grid-template-columns: 1fr 1fr; }
+      .stat-value { font-size: 36px; }
+
+      /* Lookup form stacks */
+      .lookup-form { flex-direction: column; }
+      .lookup-form input { border-right: 1px solid rgba(255,255,255,0.12); border-bottom: none; }
+
+      /* Leaderboard rows */
+      .lb-rank { font-size: 28px; }
+      .lb-name { font-size: 18px; }
+      .lb-count { font-size: 36px; }
+
+      /* Milestone wall tier header — allow reward to wrap below */
+      .wall-tier-header { flex-wrap: wrap; }
+      .wall-tier-reward { margin-left: 0; width: 100%; padding-top: 4px; }
+
+      /* Milestone items in hero — hide badge on small screens to prevent overflow */
+      .milestone-badge { display: none; }
+
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      /* Result stats go single column on very small screens */
+      .result-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">DYT.</a>
+    <a href="index.html" class="nav-back">← Back</a>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-label">Member Tracker</div>
+      <h1 class="hero-title">Your Sessions.<br>Your Journey.</h1>
+      <p class="hero-sub"><strong>Every session counts.</strong><br>Hit a milestone. <strong>Earn your reward.</strong><br>Rep the community.</p>
+    </div>
+
+    <div class="milestone-list">
+      <div class="milestone-item">
+        <div class="milestone-num">10</div>
+        <div class="milestone-info">
+          <h4>DYT Family</h4>
+          <p>Official recognition. Called out on socials.</p>
+        </div>
+        <div class="milestone-badge">Level 1</div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-num">25</div>
+        <div class="milestone-info">
+          <h4>Simply. T-Shirt</h4>
+          <p>Your first piece of kit. You've earned it.</p>
+        </div>
+        <div class="milestone-badge">Level 2</div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-num">50</div>
+        <div class="milestone-info">
+          <h4>Full Simply. Kit</h4>
+          <p>Hoodie + tracksuit. The full look.</p>
+        </div>
+        <div class="milestone-badge">Level 3</div>
+      </div>
+      <div class="milestone-item">
+        <div class="milestone-num">100</div>
+        <div class="milestone-info">
+          <h4>Legendary Status</h4>
+          <p>Bespoke kit. Name on the wall. Forever.</p>
+        </div>
+        <div class="milestone-badge">Level 4</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOOKUP -->
+  <div class="lookup">
+    <div class="lookup-label">Check Your Progress</div>
+    <h2 class="lookup-title">Find Your Stats.</h2>
+
+    <div class="lookup-form">
+      <input type="text" id="handleInput" placeholder="Your Instagram handle (e.g. @john)" onkeydown="if(event.key==='Enter')lookupMember()">
+      <button onclick="lookupMember()">Look Up →</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-card">
+        <div class="result-handle" id="resultHandle"></div>
+        <div class="result-name" id="resultName"></div>
+
+        <div id="milestonesAchieved"></div>
+
+        <div class="result-stats">
+          <div class="stat-box">
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value orange" id="statSessions">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Member Since</div>
+            <div class="stat-value" id="statSince" style="font-size:28px;">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Current Level</div>
+            <div class="stat-value" id="statLevel">—</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label" id="progressLabel">Progress to next milestone</span>
+            <span class="progress-target" id="progressTarget"></span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+          <div class="progress-sessions" id="progressDots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="notFound" style="display:none;margin-top:32px;">
+      <p style="font-size:11px;letter-spacing:0.25em;color:rgba(255,255,255,0.3);">Handle not found. <a href="#join" style="color:var(--orange);border-bottom:1px solid rgba(255,68,0,0.3);">Sign up to join →</a></p>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="leaderboard">
+    <div class="lb-label">Live Rankings</div>
+    <h2 class="lb-title">The Board.</h2>
+    <p class="lb-sub">Ranked by sessions. Updated live.</p>
+    <div id="leaderboardContent"></div>
+  </div>
+
+  <!-- MILESTONE WALL -->
+  <div class="wall">
+    <div class="wall-label">Hall of Fame</div>
+    <h2 class="wall-title">The Wall.</h2>
+    <p class="wall-sub">Hoopers who have earned their status.</p>
+
+    <div id="wallContent">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">DYT.</div>
+    <div class="footer-tag">By Hoopers. For Hoopers. DYT Family.</div>
+  </footer>
+
+  <script>
+    // ── LIVE GOOGLE SHEETS CONFIG ──
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0uD0pUJomy00VfLc7HtkgsfuIWMBcVENzG44oR0w1LtFaU2qft4D127ozerO5b_IhaxpNgcJkyW3n/pub?output=csv';
+
+    const MILESTONES = [
+      { sessions: 10,  label: 'DYT Family',         reward: 'Shoutout on socials',    level: 1 },
+      { sessions: 25,  label: 'Simply. T-Shirt', reward: 'Simply. T-Shirt',  level: 2 },
+      { sessions: 50,  label: 'Full Simply. Kit',    reward: 'Hoodie + tracksuit',     level: 3 },
+      { sessions: 100, label: 'Legendary Status',    reward: 'Bespoke kit + The Wall', level: 4 },
+    ];
+
+    let allMembers = [];
+
+    function parseCSV(text) {
+      return text.trim().split('\n').map(line => {
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          if (line[i] === '"') { inQ = !inQ; }
+          else if (line[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+          else { cur += line[i]; }
+        }
+        cols.push(cur.trim());
+        return cols;
+      });
+    }
+
+    function formatDate(raw) {
+      if (!raw) return '—';
+      const d = new Date(raw);
+      if (isNaN(d)) return raw;
+      return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+    }
+
+    // ── FETCH MEMBERS FROM SHEET ──
+    async function fetchMembers() {
+      try {
+        const res  = await fetch(CSV_URL);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        allMembers = rows.slice(1).map(row => {
+          const rawHandle = (row[1] || '').toLowerCase().replace(/^@/, '');
+          return {
+            name:      row[0] || '',
+            handle:    '@' + rawHandle,
+            sessions:  Math.round(parseFloat(row[2]) || 0),
+            joined:    formatDate(row[3]),
+            milestone: row[4] || ''
+          };
+        }).filter(m => m.handle !== '@');
+        buildLeaderboard();
+        buildWall();
+      } catch(e) {
+        console.error('Sheet fetch error:', e);
+      }
+    }
+
+    function getMilestone(sessions) {
+      let current = null;
+      for (const m of MILESTONES) {
+        if (sessions >= m.sessions) current = m;
+      }
+      return current;
+    }
+
+    function getNextMilestone(sessions) {
+      return MILESTONES.find(m => m.sessions > sessions) || null;
+    }
+
+    function lookupMember() {
+      const input  = document.getElementById('handleInput').value.trim().toLowerCase().replace(/^@/, '');
+      const member = allMembers.find(m => m.handle.replace(/^@/, '').toLowerCase() === input);
+
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('notFound').style.display = 'none';
+
+      if (!member) {
+        document.getElementById('notFound').style.display = 'block';
+        return;
+      }
+
+      displayMember(member);
+    }
+
+    function displayMember(member) {
+      document.getElementById('resultHandle').textContent = member.handle;
+      document.getElementById('resultName').textContent = member.name;
+      document.getElementById('statSessions').textContent = member.sessions;
+      document.getElementById('statSince').textContent = member.joined;
+
+      const current = getMilestone(member.sessions);
+      const next    = getNextMilestone(member.sessions);
+
+      document.getElementById('statLevel').textContent = current ? 'Level ' + current.level : '—';
+
+      // milestones achieved
+      const achieved = MILESTONES.filter(m => member.sessions >= m.sessions);
+      const achievedEl = document.getElementById('milestonesAchieved');
+      achievedEl.innerHTML = achieved.map(m => `
+        <div class="milestone-achieved">
+          <div class="milestone-achieved-icon">${m.sessions}</div>
+          <div>
+            <h4>${m.label} ✓</h4>
+            <p>${m.reward}</p>
+          </div>
+        </div>
+      `).join('');
+
+      // progress bar
+      if (next) {
+        const prev = current ? current.sessions : 0;
+        const pct  = ((member.sessions - prev) / (next.sessions - prev)) * 100;
+        document.getElementById('progressLabel').textContent  = `Progress to ${next.sessions} sessions`;
+        document.getElementById('progressTarget').textContent = `${member.sessions} / ${next.sessions}`;
+        document.getElementById('progressFill').style.width   = Math.min(pct, 100) + '%';
+
+        // dots
+        const dots = document.getElementById('progressDots');
+        dots.innerHTML = '';
+        for (let i = 0; i < next.sessions; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'session-dot' + (i < member.sessions ? ' done' : '');
+          dots.appendChild(dot);
+        }
+      } else {
+        document.getElementById('progressLabel').textContent  = 'Legendary Status Achieved.';
+        document.getElementById('progressTarget').textContent = '100 / 100';
+        document.getElementById('progressFill').style.width   = '100%';
+      }
+
+      document.getElementById('result').classList.add('show');
+    }
+
+    // ── LEADERBOARD ──
+    function buildLeaderboard() {
+      const sorted = allMembers.slice().sort((a, b) => b.sessions - a.sessions);
+      const el = document.getElementById('leaderboardContent');
+
+      el.innerHTML = sorted.map((m, i) => {
+        const current = getMilestone(m.sessions);
+        const next    = getNextMilestone(m.sessions);
+        const prev    = current ? current.sessions : 0;
+        const pct     = next ? Math.min(((m.sessions - prev) / (next.sessions - prev)) * 100, 100) : 100;
+        const nextText = next
+          ? `${next.sessions - m.sessions} session${next.sessions - m.sessions !== 1 ? 's' : ''} to ${next.label}`
+          : 'Legendary Status achieved';
+
+        return `
+          <div class="lb-row">
+            <div class="lb-rank ${i < 3 ? 'top' : ''}">#${i + 1}</div>
+            <div>
+              <div class="lb-name">${m.name}</div>
+              <div class="lb-handle">${m.handle}</div>
+              <div class="lb-bar"><div class="lb-bar-fill" style="width:${pct}%"></div></div>
+              <div class="lb-next">${nextText}</div>
+            </div>
+            <div class="lb-sessions">
+              <div class="lb-count">${m.sessions}</div>
+              <div class="lb-sessions-label">Sessions</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── WALL ──
+    function buildWall() {
+      const tiers = MILESTONES.slice().reverse();
+      const wallEl = document.getElementById('wallContent');
+
+      wallEl.innerHTML = tiers.map(tier => {
+        const members = allMembers.filter(m => m.sessions >= tier.sessions);
+        return `
+          <div class="wall-tier">
+            <div class="wall-tier-header">
+              <div class="wall-tier-num">${tier.sessions}</div>
+              <div class="wall-tier-label">${tier.label}</div>
+              <div class="wall-tier-reward">${tier.reward}</div>
+            </div>
+            <div class="wall-members">
+              ${members.length
+                ? members.map(m => `<div class="wall-member">${m.handle}</div>`).join('')
+                : '<span class="wall-empty">First to reach this milestone gets their name here.</span>'
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    fetchMembers();
+  </script>
+
+</body>
+</html>

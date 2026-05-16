@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYT — My Stats</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}a{color:inherit;text-decoration:none}
+    :root{--black:#080808;--white:#fff;--orange:#FF4400;--rule:rgba(255,255,255,0.1)}
+    body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;min-height:100vh}
+    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;opacity:0.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;mix-blend-mode:overlay}
+    nav{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--rule)}
+    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.1em}
+    .nav-back{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+    .hero{padding:60px 24px 48px;border-bottom:1px solid var(--rule)}
+    .label{font-size:10px;letter-spacing:0.5em;color:var(--orange);text-transform:uppercase;margin-bottom:16px}
+    h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,12vw,100px);line-height:0.88;margin-bottom:24px}
+    .sub{font-size:11px;letter-spacing:0.25em;color:rgba(255,255,255,0.35);text-transform:uppercase;line-height:2}
+    .search{padding:32px 24px;border-bottom:1px solid var(--rule)}
+    .search-wrap{display:flex;gap:0;max-width:500px}
+    .search-wrap input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-right:none;color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:16px 20px;outline:none;letter-spacing:0.1em}
+    .search-wrap input::placeholder{color:rgba(255,255,255,0.25)}
+    .search-wrap button{background:var(--orange);border:none;color:var(--white);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;padding:16px 24px;cursor:pointer;white-space:nowrap}
+    .result{padding:40px 24px;display:none}
+    .r-name{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:0.9;margin-bottom:8px}
+    .r-handle{font-size:11px;letter-spacing:0.3em;color:rgba(255,255,255,0.4);margin-bottom:40px}
+    .big-num{font-family:'Bebas Neue',sans-serif;font-size:140px;color:var(--orange);line-height:0.85}
+    .big-label{font-size:10px;letter-spacing:0.5em;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-top:8px;margin-bottom:48px}
+    .milestone-badge{display:inline-block;border:1px solid var(--orange);color:var(--orange);font-size:11px;letter-spacing:0.3em;text-transform:uppercase;padding:10px 20px;margin-bottom:48px}
+    .prog-section{margin-bottom:48px}
+    .prog-label{display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.3em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:12px}
+    .prog-bar{height:2px;background:rgba(255,255,255,0.1);position:relative}
+    .prog-fill{height:100%;background:var(--orange);transition:width 1s ease}
+    .milestones{margin-top:48px;border-top:1px solid var(--rule);padding-top:40px}
+    .ms-title{font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:24px}
+    .ms-item{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .ms-icon{font-size:24px;width:36px;text-align:center;flex-shrink:0}
+    .ms-info{flex:1}
+    .ms-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.05em}
+    .ms-sessions{font-size:10px;letter-spacing:0.2em;color:rgba(255,255,255,0.3);text-transform:uppercase}
+    .ms-check{font-size:18px;color:var(--orange)}
+    .ms-item.locked .ms-icon,.ms-item.locked .ms-name,.ms-item.locked .ms-sessions{opacity:0.3}
+    .not-found{padding:40px 24px;font-size:11px;letter-spacing:0.25em;color:rgba(255,255,255,0.35);text-transform:uppercase;line-height:2}
+    .loading-msg{padding:40px 24px;font-size:10px;letter-spacing:0.3em;color:rgba(255,255,255,0.3);text-transform:uppercase}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">DYT.</a>
+  <a href="index.html" class="nav-back">← Back</a>
+</nav>
+
+<div class="hero">
+  <div class="label">Member Stats</div>
+  <h1>Your<br>Sessions.</h1>
+  <p class="sub">Type your Instagram handle to see your count,<br>milestone and what's coming next.</p>
+</div>
+
+<div class="search">
+  <div class="search-wrap">
+    <input type="text" id="handleInput" placeholder="your instagram handle" onkeydown="if(event.key==='Enter')lookup()">
+    <button onclick="lookup()">Look Up →</button>
+  </div>
+</div>
+
+<div id="loading" class="loading-msg" style="display:none">Looking you up...</div>
+<div id="notFound" class="not-found" style="display:none">Handle not found. Make sure you're registered — speak to a DYT admin.</div>
+
+<div class="result" id="result">
+  <div class="r-name" id="rName"></div>
+  <div class="r-handle" id="rHandle"></div>
+  <div class="big-num" id="rSessions"></div>
+  <div class="big-label">Sessions Completed</div>
+  <div id="rBadge"></div>
+  <div class="prog-section">
+    <div class="prog-label">
+      <span id="progLabel"></span>
+      <span id="progNums"></span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="milestones">
+    <div class="ms-title">Milestones.</div>
+    <div class="ms-item" id="ms10"><div class="ms-icon">⭐</div><div class="ms-info"><div class="ms-name">DYT Family</div><div class="ms-sessions">10 Sessions</div></div><div class="ms-check" id="chk10"></div></div>
+    <div class="ms-item" id="ms25"><div class="ms-icon">🔥</div><div class="ms-info"><div class="ms-name">SIMPLY Drop</div><div class="ms-sessions">25 Sessions — SIMPLY Item</div></div><div class="ms-check" id="chk25"></div></div>
+    <div class="ms-item" id="ms50"><div class="ms-icon">👑</div><div class="ms-info"><div class="ms-name">Elite</div><div class="ms-sessions">50 Sessions — Full SIMPLY Kit</div></div><div class="ms-check" id="chk50"></div></div>
+    <div class="ms-item" id="ms100"><div class="ms-icon">🏆</div><div class="ms-info"><div class="ms-name">Legendary</div><div class="ms-sessions">100 Sessions</div></div><div class="ms-check" id="chk100"></div></div>
+  </div>
+</div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbxdBHQFlilZppJ2YulebHGemaxeHB4CFk3IroKwltpcb9u6u4XdPWewMYo-7KH09K8g/exec';
+
+async function lookup(){
+  const h=document.getElementById('handleInput').value.trim().replace('@','');
+  if(!h)return;
+  document.getElementById('result').style.display='none';
+  document.getElementById('notFound').style.display='none';
+  document.getElementById('loading').style.display='block';
+  try{
+    const r=await fetch(API+'?action=lookup&handle='+encodeURIComponent(h));
+    const d=await r.json();
+    document.getElementById('loading').style.display='none';
+    if(!d.found){document.getElementById('notFound').style.display='block';return}
+    showResult(d);
+  }catch(e){document.getElementById('loading').style.display='none';document.getElementById('notFound').style.display='block'}
+}
+
+function showResult(d){
+  document.getElementById('rName').textContent=d.name;
+  document.getElementById('rHandle').textContent='@'+d.handle;
+  document.getElementById('rSessions').textContent=d.sessions;
+
+  // milestone badge
+  const badge=document.getElementById('rBadge');
+  badge.innerHTML=d.milestone?`<div class="milestone-badge">${d.milestone} Unlocked</div>`:'';
+
+  // progress bar
+  const next=d.next;
+  const prev=next.target===10?0:next.target===25?10:next.target===50?25:next.target===100?50:100;
+  const pct=next.target===d.sessions?100:Math.round(((d.sessions-prev)/(next.target-prev))*100);
+  document.getElementById('progLabel').textContent='Next: '+next.name;
+  document.getElementById('progNums').textContent=d.sessions+' / '+next.target;
+  setTimeout(()=>{document.getElementById('progFill').style.width=Math.min(pct,100)+'%'},100);
+
+  // milestone checks
+  [[10,'ms10','chk10'],[25,'ms25','chk25'],[50,'ms50','chk50'],[100,'ms100','chk100']].forEach(([n,id,chk])=>{
+    const el=document.getElementById(id);
+    const ck=document.getElementById(chk);
+    if(d.sessions>=n){el.classList.remove('locked');ck.textContent='✓'}
+    else{el.classList.add('locked');ck.textContent=''}
+  });
+
+  document.getElementById('result').style.display='block';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYT — Session Drop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 80px 40px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('images/film/IMG_8157-2.jpg');
+      background-size: cover;
+      background-position: center 75%;
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(8,8,8,0.3) 0%,
+        rgba(8,8,8,0.15) 30%,
+        rgba(8,8,8,0.75) 65%,
+        rgba(8,8,8,0.98) 100%
+      );
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 12vw, 140px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      margin-bottom: 32px;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta-item {}
+
+    .hero-meta-label {
+      font-size: 9px;
+      letter-spacing: 0.45em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .hero-meta-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    /* ── SPOTS STRIP ── */
+    .spots-strip {
+      background: var(--orange);
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .spots-strip-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .spots-big {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 80px;
+      line-height: 1;
+      color: var(--white);
+    }
+
+    .spots-big.full { color: rgba(255,255,255,0.3); }
+
+    .spots-desc h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .spots-desc p {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+    }
+
+    .spots-pips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .pip {
+      width: 24px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+    }
+
+    .pip.taken { background: var(--white); }
+
+    /* ── FORM SECTION ── */
+    .form-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .form-left {
+      padding: 80px 40px;
+      border-right: 1px solid var(--rule);
+    }
+
+    .form-right {
+      padding: 80px 40px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 6vw, 72px);
+      line-height: 0.9;
+      margin-bottom: 40px;
+    }
+
+    /* form fields */
+    .field { margin-bottom: 20px; }
+
+    .field label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      padding: 16px 20px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus { border-color: rgba(255,255,255,0.4); }
+    .field input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 28px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-row input[type="checkbox"] { display: none; }
+
+    .toggle-box {
+      width: 20px;
+      height: 20px;
+      border: 1px solid rgba(255,255,255,0.25);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .toggle-row input:checked + .toggle-box {
+      background: var(--orange);
+      border-color: var(--orange);
+    }
+
+    .toggle-row input:checked + .toggle-box::after {
+      content: '✓';
+      font-size: 11px;
+      color: white;
+    }
+
+    .toggle-text {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--orange);
+      border: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 20px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .submit-btn:hover { opacity: 0.85; }
+    .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .form-small {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.2);
+      line-height: 1.9;
+    }
+
+    /* right side rules */
+    .rules-block { margin-bottom: 40px; }
+
+    .rule-item-session {
+      display: flex;
+      gap: 20px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .rule-num-session {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      color: var(--orange);
+      line-height: 1;
+      flex-shrink: 0;
+      width: 32px;
+    }
+
+    .rule-body h4 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .rule-body p {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.8;
+    }
+
+    /* ── STATES ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ── SUCCESS ── */
+    .outcome {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 80px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .outcome-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('images/film/IMG_8358.jpg');
+      background-size: cover;
+      background-position: 92% center;
+    }
+
+    .outcome-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(8,8,8,0.3) 0%, rgba(8,8,8,0.95) 100%);
+    }
+
+    .outcome-content { position: relative; z-index: 2; max-width: 700px; }
+
+    .outcome-tag {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .outcome-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 10vw, 120px);
+      line-height: 0.88;
+      margin-bottom: 24px;
+    }
+
+    .outcome-sub {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    .outcome-rule {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+    }
+
+    .footer-tag {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.15);
+      text-transform: uppercase;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      .hero { padding: 60px 24px 60px; min-height: 65vh; }
+      .hero-bg { background-size: cover; background-position: center 70%; }
+      .hero-meta { gap: 24px; }
+      .spots-strip { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
+      .spots-pips { display: none; }
+      .form-section { grid-template-columns: 1fr; }
+      .form-left { padding: 60px 24px; border-right: none; border-bottom: 1px solid var(--rule); }
+      .form-right { padding: 60px 24px; }
+      .outcome { padding: 60px 24px; }
+      footer { padding: 32px 24px; flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">DYT.</a>
+    <a href="index.html" class="nav-back">← Back</a>
+  </nav>
+
+  <!-- LOADING -->
+  <div id="stateLoading" class="state active">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="hero-label">Session Drop</div>
+        <h1 class="hero-title">Loading...</h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- INACTIVE -->
+  <div id="stateInactive" class="state">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="hero-label">Session Drop</div>
+        <h1 class="hero-title">No Session<br>Active.</h1>
+        <div class="hero-meta">
+          <div class="hero-meta-item">
+            <div class="hero-meta-label">Follow us</div>
+            <div class="hero-meta-value">@dyt.london</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:60px 40px;border-bottom:1px solid var(--rule);">
+      <p style="font-size:11px;letter-spacing:0.25em;color:rgba(255,255,255,0.3);text-transform:uppercase;line-height:2;">The next drop is coming.<br>Follow us on Instagram to be first to know when it goes live.</p>
+    </div>
+    <footer>
+      <div class="footer-logo">DYT.</div>
+      <div class="footer-tag">For Hoopers. By Hoopers. DYT Family.</div>
+    </footer>
+  </div>
+
+  <!-- ACTIVE -->
+  <div id="stateActive" class="state">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <div class="hero-label">Session Drop</div>
+        <h1 class="hero-title" id="sessionName">DYT Breakfast<br>Club.</h1>
+        <div class="hero-meta">
+          <div class="hero-meta-item">
+            <div class="hero-meta-label">Date</div>
+            <div class="hero-meta-value" id="sessionDate">12/05</div>
+          </div>
+          <div class="hero-meta-item">
+            <div class="hero-meta-label">Time</div>
+            <div class="hero-meta-value" id="sessionTime">7:00 AM</div>
+          </div>
+          <div class="hero-meta-item">
+            <div class="hero-meta-label">Location</div>
+            <div class="hero-meta-value" id="sessionLocation" style="font-size:18px;max-width:200px;line-height:1.2;">Roehampton Sport & Fitness Centre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spots strip -->
+    <div class="spots-strip">
+      <div class="spots-strip-left">
+        <div class="spots-big" id="spotsNum" style="font-size:40px;opacity:0.4;">—</div>
+        <div class="spots-desc">
+          <h3 id="spotsLabel">Checking Spots...</h3>
+          <p>First come. First served. <strong>No exceptions.</strong></p>
+        </div>
+      </div>
+      <div class="spots-pips" id="spotsPips"></div>
+    </div>
+
+    <!-- Form + Rules -->
+    <div class="form-section">
+
+      <div class="form-left">
+        <div class="section-label">Register</div>
+        <h2 class="section-title">Claim Your<br>Spot.</h2>
+
+        <form id="dropForm" onsubmit="submitForm(event)">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="fieldName" placeholder="Your name" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label>Instagram Handle</label>
+            <input type="text" id="fieldHandle" placeholder="@yourhandle" required autocomplete="off">
+          </div>
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="fieldEmail" placeholder="your@email.com" required autocomplete="email">
+          </div>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="fieldFirst">
+            <div class="toggle-box"></div>
+            <span class="toggle-text">This is my first DYT session</span>
+          </label>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Claim Your Spot →</button>
+
+          <div style="margin-top:20px;padding:16px 20px;border:1px solid rgba(255,68,0,0.4);background:rgba(255,68,0,0.06);">
+            <p style="font-size:11px;letter-spacing:0.2em;color:var(--orange);text-transform:uppercase;margin-bottom:6px;font-weight:700;">No-Show Rule</p>
+            <p style="font-size:10px;letter-spacing:0.12em;color:rgba(255,255,255,0.55);line-height:1.9;">Can't make it? Give <strong style="color:var(--white);">12 hours notice</strong>.<br>No-shows are removed from the next drop. No exceptions.</p>
+          </div>
+          <p class="form-small" style="margin-top:16px;">By registering you agree to <strong style="color:var(--white);">show up</strong>, <strong style="color:var(--white);">work hard</strong> and <strong style="color:var(--white);">look after each other.</strong></p>
+        </form>
+      </div>
+
+      <div class="form-right">
+        <div class="section-label">The Code</div>
+        <h2 class="section-title">What To<br>Expect.</h2>
+
+        <div class="rules-block">
+          <div class="rule-item-session">
+            <div class="rule-num-session">1</div>
+            <div class="rule-body">
+              <h4>Everyone Works.</h4>
+              <p>Buy-in set before we start. Agility lines and sprints. <strong>No exceptions.</strong> <strong>You earn your place.</strong></p>
+            </div>
+          </div>
+          <div class="rule-item-session">
+            <div class="rule-num-session">2</div>
+            <div class="rule-body">
+              <h4>Everyone Sets.</h4>
+              <p><strong>Every hooper</strong> sets a drill. No coaches. No hierarchy. Just <strong>the community</strong> running it <strong>together.</strong></p>
+            </div>
+          </div>
+          <div class="rule-item-session">
+            <div class="rule-num-session">3</div>
+            <div class="rule-body">
+              <h4>Everyone Is Equal.</h4>
+              <p>Pro or beginner, it doesn't matter. The court is the equaliser. <strong>Come ready to work.</strong></p>
+            </div>
+          </div>
+          <div class="rule-item-session">
+            <div class="rule-num-session">4</div>
+            <div class="rule-body">
+              <h4>No-Show Rule.</h4>
+              <p>Can't make it? Give <strong>12 hours notice.</strong> No-shows sit out the next drop. <strong>The 10 spots matter.</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      <div class="footer-logo">DYT.</div>
+      <div class="footer-tag">For Hoopers. By Hoopers. DYT Family.</div>
+    </footer>
+
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="stateSuccess" class="state">
+    <div class="outcome">
+      <div class="outcome-bg"></div>
+      <div class="outcome-content">
+        <div class="outcome-tag">Confirmed</div>
+        <h1 class="outcome-title">You're In.<br>See You On<br>The Court.</h1>
+        <p class="outcome-sub" id="successDetails"></p>
+        <div class="outcome-rule">
+          Remember: 12 hours notice if you can't make it. No exceptions.<br>
+          No-shows sit out the next drop.
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-logo">DYT.</div>
+      <div class="footer-tag">For Hoopers. By Hoopers. DYT Family.</div>
+    </footer>
+  </div>
+
+  <!-- WAITLIST -->
+  <div id="stateWaitlist" class="state">
+    <div class="outcome" style="min-height:70vh;">
+      <div class="outcome-bg" style="background-image:url('images/film/IMG_8159.jpg');background-position:center;"></div>
+      <div class="outcome-content">
+        <div class="outcome-tag">Waitlist</div>
+        <h1 class="outcome-title">All 10 Spots<br>Are Taken.</h1>
+        <p class="outcome-sub">You're on the waitlist. If anyone drops out we'll reach out on Instagram within 2 hours of kickoff.</p>
+        <div class="outcome-rule">Keep an eye on your Instagram DMs.</div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-logo">DYT.</div>
+      <div class="footer-tag">For Hoopers. By Hoopers. DYT Family.</div>
+    </footer>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvQ2X3SpLYfpdaDI4CtmPSDnIjOZSjZQAg1s9W9fZdLpxSs8l_M8zF4rJ9P-TT4Twg/exec';
+
+    // Read session ID from URL — defaults to null (legacy path) if not provided
+    const SESSION_ID = new URLSearchParams(window.location.search).get('id') || null;
+
+    let sessionData = null;
+
+    function showState(id) {
+      document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function buildPips(taken, max) {
+      const el = document.getElementById('spotsPips');
+      if (!el) return;
+      el.innerHTML = '';
+      for (let i = 0; i < max; i++) {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (i < taken ? ' taken' : '');
+        el.appendChild(pip);
+      }
+    }
+
+    async function loadSession() {
+      // Show the page immediately — don't wait for the API
+      showState('stateActive');
+
+      try {
+        const idParam = SESSION_ID ? `&id=${encodeURIComponent(SESSION_ID)}` : '';
+        const res  = await fetch(`${SCRIPT_URL}?action=session_info${idParam}`);
+        const data = await res.json();
+        sessionData = data;
+
+        if (data.error || !data.isActive) { showState('stateInactive'); return; }
+
+        document.getElementById('sessionName').innerHTML = (data.sessionName || 'DYT Session') + '.';
+        document.getElementById('sessionDate').textContent     = data.date     || '—';
+        document.getElementById('sessionTime').textContent     = data.time     || '—';
+        document.getElementById('sessionLocation').textContent = data.location || '—';
+
+        const left = Math.max(0, data.maxSpots - data.confirmed);
+        const spotsEl = document.getElementById('spotsNum');
+        spotsEl.textContent   = left;
+        spotsEl.style.fontSize = '';
+        spotsEl.style.opacity  = '';
+        spotsEl.className      = 'spots-big' + (left === 0 ? ' full' : '');
+        document.getElementById('spotsLabel').textContent = left === 0 ? 'Spots Full.' : 'Spots Available.';
+        buildPips(data.confirmed, data.maxSpots);
+        if (left > 0) document.getElementById('submitBtn').disabled = false;
+      } catch(e) {
+        showState('stateInactive');
+      }
+    }
+
+    async function submitForm(e) {
+      e.preventDefault();
+      const btn    = document.getElementById('submitBtn');
+      const name   = document.getElementById('fieldName').value.trim();
+      const handle = document.getElementById('fieldHandle').value.trim().replace(/^@/, '');
+      const email  = document.getElementById('fieldEmail').value.trim();
+      const first  = document.getElementById('fieldFirst').checked;
+
+      if (!name || !handle || !email) return;
+
+      btn.textContent = 'Claiming...';
+      btn.disabled    = true;
+
+      try {
+        const idParam = SESSION_ID ? `&id=${encodeURIComponent(SESSION_ID)}` : '';
+        const url  = `${SCRIPT_URL}?action=session_register${idParam}&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}&email=${encodeURIComponent(email)}&first=${first}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'confirmed') {
+          document.getElementById('successDetails').textContent =
+            `${sessionData?.date || ''} · ${sessionData?.time || ''} · ${sessionData?.location || ''}`;
+          showState('stateSuccess');
+        } else if (data.status === 'waitlist') {
+          showState('stateWaitlist');
+        } else {
+          btn.textContent = 'Claim Your Spot →';
+          btn.disabled    = false;
+          alert('Something went wrong. Please try again.');
+        }
+      } catch(err) {
+        btn.textContent = 'Claim Your Spot →';
+        btn.disabled    = false;
+        alert('Connection error. Please try again.');
+      }
+    }
+
+    loadSession();
+  </script>
+
+</body>
+</html>

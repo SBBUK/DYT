@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simply. Clothing — Dropping Soon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(8,8,8,0.95);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 40px 80px;
+      position: relative;
+    }
+
+    .hero-label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 14vw, 160px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      margin-bottom: 40px;
+    }
+
+    .hero-title span {
+      color: rgba(255,255,255,0.15);
+    }
+
+    .dropping {
+      display: inline-block;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: 0.15em;
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      padding: 16px 40px;
+      margin-bottom: 48px;
+    }
+
+    .hero-sub {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 60px;
+      line-height: 2;
+    }
+
+    /* ── NOTIFY FORM ── */
+    .notify-form {
+      display: flex;
+      gap: 0;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .notify-form input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-right: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      padding: 16px 20px;
+      outline: none;
+    }
+    .notify-form input::placeholder { color: rgba(255,255,255,0.25); }
+
+    .notify-form button {
+      background: var(--orange);
+      border: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 16px 24px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .notify-form button:hover { opacity: 0.85; }
+
+    /* ── PHOTO STRIP ── */
+    .strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 0;
+      cursor: grab;
+    }
+    .strip::-webkit-scrollbar { display: none; }
+
+    .strip-item {
+      flex-shrink: 0;
+      width: 320px;
+      height: 480px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .strip-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      transition: transform 0.4s;
+      pointer-events: none;
+    }
+
+    .strip-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(8,8,8,0.6) 0%, transparent 50%);
+    }
+
+    /* ── BOTTOM MESSAGE ── */
+    .bottom {
+      padding: 100px 40px;
+      text-align: center;
+      border-top: 1px solid var(--rule);
+    }
+
+    .bottom-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 8vw, 100px);
+      line-height: 0.9;
+      margin-bottom: 32px;
+    }
+
+    .bottom-sub {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+    }
+
+    .footer-tag {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      .hero { padding: 100px 24px 60px; min-height: auto; }
+      .hero-title { font-size: clamp(56px, 16vw, 120px); }
+      .dropping { padding: 12px 24px; font-size: clamp(20px, 5vw, 36px); }
+      .notify-form { flex-direction: column; }
+      .notify-form input { border-right: 1px solid rgba(255,255,255,0.15); border-bottom: none; }
+      .strip-item { width: 200px; height: 300px; }
+      .bottom { padding: 72px 24px; }
+      footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">DYT.</a>
+    <a href="index.html" class="nav-back">← Back</a>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Simply. Clothing</div>
+    <h1 class="hero-title">Built on<br>the Court.<br><span>Worn off it.</span></h1>
+    <div class="dropping">Stay Locked. Dropping Soon.</div>
+    <p class="hero-sub">The kit isn't just clothing. It's the community on your back.<br>Every hooper who wears it represents something bigger.<br>Be first to know when it drops.</p>
+
+    <form class="notify-form" onsubmit="handleNotify(event)">
+      <input type="email" placeholder="Your email address" required>
+      <button type="submit">Notify Me</button>
+    </form>
+  </div>
+
+  <!-- PHOTO STRIP -->
+  <div class="strip" id="clothingStrip">
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-50.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-50 2.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-51.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-50 3.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-49.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-50 4.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-49 2.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-50 5.jpg" alt="SIMPLY"></div>
+    <div class="strip-item"><img src="images/PHOTO-2026-04-02-21-01-49 3.jpg" alt="SIMPLY"></div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom">
+    <h2 class="bottom-title">Culture<br>is the Kit.</h2>
+    <p class="bottom-sub">We started on the courts. We built a community.<br>Now we wear what we stand for.<br>DYT Family.</p>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">DYT.</div>
+    <div class="footer-tag">By Hoopers. For Hoopers. DYT Family.</div>
+  </footer>
+
+  <script>
+    function handleNotify(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.textContent = "You're on the list ✓";
+      btn.style.background = '#222';
+      e.target.querySelector('input').disabled = true;
+    }
+
+    const strip = document.getElementById('clothingStrip');
+    let isDown = false, startX, scrollLeft;
+    strip.addEventListener('mousedown', e => { isDown = true; strip.style.cursor = 'grabbing'; startX = e.pageX - strip.offsetLeft; scrollLeft = strip.scrollLeft; });
+    strip.addEventListener('mouseleave', () => { isDown = false; strip.style.cursor = 'grab'; });
+    strip.addEventListener('mouseup', () => { isDown = false; strip.style.cursor = 'grab'; });
+    strip.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); strip.scrollLeft = scrollLeft - (e.pageX - strip.offsetLeft - startX); });
+  </script>
+
+</body>
+</html>
