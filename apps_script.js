@@ -357,32 +357,14 @@ function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc) {
   if (status === 'Confirmed') {
     MailApp.sendEmail({
       to: email,
-      subject: "You're In. — DYT Session Drop",
-      htmlBody: `<div style="background:#080808;color:#ffffff;font-family:monospace;padding:48px;max-width:560px;margin:0 auto;">
-        <p style="font-size:11px;letter-spacing:0.4em;color:#FF4400;text-transform:uppercase;margin-bottom:24px;">Session Confirmed</p>
-        <h1 style="font-family:sans-serif;font-size:48px;line-height:1;font-weight:900;margin-bottom:32px;">You're In.<br>See You On<br>The Court.</h1>
-        <div style="border-top:1px solid rgba(255,255,255,0.15);border-bottom:1px solid rgba(255,255,255,0.15);padding:24px 0;margin-bottom:32px;">
-          <p style="font-size:11px;letter-spacing:0.3em;color:#FF4400;text-transform:uppercase;margin-bottom:4px;">Session</p>
-          <p style="font-size:20px;font-weight:700;margin-bottom:20px;">${sName}</p>
-          <p style="font-size:11px;letter-spacing:0.3em;color:#FF4400;text-transform:uppercase;margin-bottom:4px;">Date & Time</p>
-          <p style="font-size:20px;font-weight:700;margin-bottom:20px;">${sDate} · ${sTime}</p>
-          <p style="font-size:11px;letter-spacing:0.3em;color:#FF4400;text-transform:uppercase;margin-bottom:4px;">Location</p>
-          <p style="font-size:20px;font-weight:700;">${sLoc}</p>
-        </div>
-        <p style="font-size:12px;letter-spacing:0.15em;color:rgba(255,255,255,0.5);line-height:2;margin-bottom:32px;">Can't make it? Give <strong style="color:#ffffff;">12 hours notice</strong>. No-shows sit out the next drop. No exceptions.</p>
-        <p style="font-size:10px;letter-spacing:0.35em;color:rgba(255,255,255,0.25);text-transform:uppercase;">For Hoopers. By Hoopers. DYT Family.</p>
-      </div>`
+      subject: "You're In — " + sName + " · " + sDate,
+      body: "You're in.\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Give 12 hours notice. No-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else {
     MailApp.sendEmail({
       to: email,
-      subject: "You're on the Waitlist — DYT Session Drop",
-      htmlBody: `<div style="background:#080808;color:#ffffff;font-family:monospace;padding:48px;max-width:560px;margin:0 auto;">
-        <p style="font-size:11px;letter-spacing:0.4em;color:#FF4400;text-transform:uppercase;margin-bottom:24px;">Waitlist</p>
-        <h1 style="font-family:sans-serif;font-size:48px;line-height:1;font-weight:900;margin-bottom:32px;">All 10 Spots<br>Are Taken.</h1>
-        <p style="font-size:13px;letter-spacing:0.12em;color:rgba(255,255,255,0.6);line-height:2;margin-bottom:32px;">You're on the waitlist for ${sName} on ${sDate} at ${sTime}.<br><br>If a spot opens up we'll be in touch as soon as possible. Keep an eye on your inbox.</p>
-        <p style="font-size:10px;letter-spacing:0.35em;color:rgba(255,255,255,0.25);text-transform:uppercase;">For Hoopers. By Hoopers. DYT Family.</p>
-      </div>`
+      subject: "Waitlist — " + sName + " · " + sDate,
+      body: "All 10 spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   }
 }
