@@ -532,12 +532,20 @@
 
     function buildCard(session) {
       const { id, name, date, time, location, maxSpots, confirmed, spotsLeft, status, dropDate, dropTime } = session;
-      const isClosed = status === 'closed';
-      const isLive   = status === 'live';
-      const isSoon   = status === 'soon';
 
-      const barClass    = `bar-${status}`;
-      const badgeClass  = `badge-${status}`;
+      // Auto-flip soon → live if drop time has passed
+      let effectiveStatus = status;
+      if (status === 'soon' && dropDate && dropTime) {
+        const dropDT = parseDropDate(dropDate, dropTime);
+        if (dropDT && new Date() >= dropDT) effectiveStatus = 'live';
+      }
+
+      const isClosed = effectiveStatus === 'closed';
+      const isLive   = effectiveStatus === 'live';
+      const isSoon   = effectiveStatus === 'soon';
+
+      const barClass    = `bar-${effectiveStatus}`;
+      const badgeClass  = `badge-${effectiveStatus}`;
       const badgeLabel  = isLive ? 'LIVE — DROP OPEN' : isSoon ? 'DROP COMING SOON' : 'CLOSED';
       const cardClass   = isClosed ? 'session-card card-closed' : 'session-card';
 

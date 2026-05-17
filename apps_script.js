@@ -35,6 +35,37 @@ function getOrCreateSheet(name, headers) {
   return sheet;
 }
 
+function parseDropDateTime(dropDate, dropTime) {
+  try {
+    const parts = String(dropDate).split('/').map(Number);
+    const day = parts[0], month = parts[1];
+    const year = new Date().getFullYear();
+    let h, min;
+    const h24 = String(dropTime).match(/^(\d{1,2}):(\d{2})$/);
+    if (h24) { h = parseInt(h24[1]); min = parseInt(h24[2]); }
+    else {
+      const h12 = String(dropTime).match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!h12) return null;
+      h = parseInt(h12[1]); min = parseInt(h12[2]);
+      const ampm = h12[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+    }
+    return new Date(year, month - 1, day, h, min, 0);
+  } catch(e) { return null; }
+}
+
+function isDropLive(sessionRow) {
+  const status   = String(sessionRow[6] || 'soon').toLowerCase().trim();
+  if (status === 'live') return true;
+  if (status !== 'soon') return false;
+  const dropDate = sessionRow[7] || '';
+  const dropTime = sessionRow[8] || '';
+  if (!dropDate || !dropTime) return false;
+  const dt = parseDropDateTime(dropDate, dropTime);
+  return dt && new Date() >= dt;
+}
+
 function isNoShow(handle) {
   const sheet = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
   const data  = sheet.getDataRange().getValues();
@@ -120,8 +151,7 @@ function doGet(e) {
         if (String(sessionsData[i][0]).trim() === String(sessionId).trim()) { sessionRow = sessionsData[i]; break; }
       }
       if (!sessionRow) return response({ status: 'error', message: 'Session not found' });
-      const status = String(sessionRow[6] || 'soon').toLowerCase().trim();
-      if (status !== 'live') return response({ status: 'error', message: 'Session is not open' });
+      if (!isDropLive(sessionRow)) return response({ status: 'error', message: 'Session is not open' });
       const maxSpots = parseInt(sessionRow[5] || 10);
       const regData  = regSheet.getDataRange().getValues();
       const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && String(row[6] || '').trim() === String(sessionId).trim());
