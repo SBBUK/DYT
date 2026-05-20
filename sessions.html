@@ -681,24 +681,31 @@
       });
     }
 
-    renderSessions(exampleSessions);
-    startCountdowns(exampleSessions);
+    // Load from cache instantly if available, otherwise show examples
+    const cached = localStorage.getItem('dyt_sessions');
+    if (cached) {
+      try {
+        const cachedSessions = JSON.parse(cached);
+        if (Array.isArray(cachedSessions) && cachedSessions.length > 0) {
+          renderSessions(cachedSessions);
+          startCountdowns(cachedSessions);
+        } else { renderSessions(exampleSessions); startCountdowns(exampleSessions); }
+      } catch(e) { renderSessions(exampleSessions); startCountdowns(exampleSessions); }
+    } else {
+      renderSessions(exampleSessions);
+      startCountdowns(exampleSessions);
+    }
 
     async function loadSessions() {
-      const container = document.getElementById('sessionsContainer');
       try {
         const res      = await fetch(`${SCRIPT_URL}?action=sessions_list`);
         const sessions = await res.json();
-
-        if (!Array.isArray(sessions) || sessions.length === 0) {
-          // No real sessions yet — keep example sessions showing
-          return;
-        }
+        if (!Array.isArray(sessions) || sessions.length === 0) return;
+        localStorage.setItem('dyt_sessions', JSON.stringify(sessions));
         renderSessions(sessions);
         startCountdowns(sessions);
-
       } catch(err) {
-        // API failed — keep the example sessions showing, don't replace them
+        // API failed — keep cached/example sessions showing
       }
     }
 

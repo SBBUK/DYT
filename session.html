@@ -693,32 +693,40 @@
       }
     }
 
+    function applySessionData(data) {
+      if (!data || data.error || !data.isActive) return;
+      document.getElementById('sessionName').innerHTML = (data.sessionName || 'DYT Session') + '.';
+      document.getElementById('sessionDate').textContent     = data.date     || '—';
+      document.getElementById('sessionTime').textContent     = data.time     || '—';
+      document.getElementById('sessionLocation').textContent = data.location || '—';
+      const left = Math.max(0, data.maxSpots - data.confirmed);
+      const spotsEl = document.getElementById('spotsNum');
+      spotsEl.textContent    = left;
+      spotsEl.style.fontSize = '';
+      spotsEl.style.opacity  = '';
+      spotsEl.className      = 'spots-big' + (left === 0 ? ' full' : '');
+      document.getElementById('spotsLabel').textContent = left === 0 ? 'Spots Full.' : 'Spots Available.';
+    }
+
     async function loadSession() {
-      // Show the page immediately — don't wait for the API
       showState('stateActive');
+
+      // Load from cache instantly if available
+      const cacheKey = 'dyt_session_' + (SESSION_ID || 'default');
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) { try { applySessionData(JSON.parse(cached)); } catch(e) {} }
 
       try {
         const idParam = SESSION_ID ? `&id=${encodeURIComponent(SESSION_ID)}` : '';
         const res  = await fetch(`${SCRIPT_URL}?action=session_info${idParam}`);
         const data = await res.json();
         sessionData = data;
+        localStorage.setItem(cacheKey, JSON.stringify(data));
 
         if (data.error || !data.isActive) { showState('stateInactive'); return; }
 
-        document.getElementById('sessionName').innerHTML = (data.sessionName || 'DYT Session') + '.';
-        document.getElementById('sessionDate').textContent     = data.date     || '—';
-        document.getElementById('sessionTime').textContent     = data.time     || '—';
-        document.getElementById('sessionLocation').textContent = data.location || '—';
-
-        const left = Math.max(0, data.maxSpots - data.confirmed);
-        const spotsEl = document.getElementById('spotsNum');
-        spotsEl.textContent   = left;
-        spotsEl.style.fontSize = '';
-        spotsEl.style.opacity  = '';
-        spotsEl.className      = 'spots-big' + (left === 0 ? ' full' : '');
-        document.getElementById('spotsLabel').textContent = left === 0 ? 'Spots Full.' : 'Spots Available.';
+        applySessionData(data);
         buildPips(data.confirmed, data.maxSpots);
-        if (left > 0) document.getElementById('submitBtn').disabled = false;
       } catch(e) {
         showState('stateInactive');
       }
