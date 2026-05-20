@@ -549,14 +549,17 @@
       const badgeLabel  = isLive ? 'LIVE — DROP OPEN' : isSoon ? 'DROP COMING SOON' : 'CLOSED';
       const cardClass   = isClosed ? 'session-card card-closed' : 'session-card';
 
+      const isFull = isLive && spotsLeft === 0;
+      const ctaLabel = isFull ? 'Join Waitlist →' : 'Claim Your Spot →';
+
       const ctaDesktop = isLive
-        ? `<a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim">Claim Your Spot →</a>`
+        ? `<a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim">${ctaLabel}</a>`
         : isSoon
           ? `<span class="btn-soon">Drop Coming Soon</span>`
           : `<span class="btn-closed">Closed</span>`;
 
       const ctaMobile = isLive
-        ? `<div class="card-body-mobile-cta"><a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim" style="display:inline-block;">Claim Your Spot →</a></div>`
+        ? `<div class="card-body-mobile-cta"><a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim" style="display:inline-block;">${ctaLabel}</a></div>`
         : '';
 
       const pips = buildPips(confirmed, maxSpots, status);
