@@ -705,8 +705,11 @@
         const sessions = await res.json();
         if (!Array.isArray(sessions) || sessions.length === 0) return;
         localStorage.setItem('dyt_sessions', JSON.stringify(sessions));
+        // Only re-render if data differs from what's showing
         renderSessions(sessions);
         startCountdowns(sessions);
+        // Clear session page caches too so spot counts stay accurate
+        sessions.forEach(s => localStorage.removeItem('dyt_session_' + s.id));
       } catch(err) {
         // API failed — keep cached/example sessions showing
       }
