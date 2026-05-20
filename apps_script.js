@@ -256,7 +256,7 @@ function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow,
       to: email,
       name: "DYT Breakfast Club",
       subject: "Waitlist — " + sName + " · " + sDate,
-      body: "All 10 spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
+      body: "All spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   }
 }
