@@ -701,11 +701,16 @@
       document.getElementById('sessionLocation').textContent = data.location || '—';
       const left = Math.max(0, data.maxSpots - data.confirmed);
       const spotsEl = document.getElementById('spotsNum');
-      spotsEl.textContent    = left;
+      spotsEl.textContent    = left === 0 ? '—' : left;
       spotsEl.style.fontSize = '';
-      spotsEl.style.opacity  = '';
+      spotsEl.style.opacity  = left === 0 ? '0.3' : '';
       spotsEl.className      = 'spots-big' + (left === 0 ? ' full' : '');
-      document.getElementById('spotsLabel').textContent = left === 0 ? 'Spots Full.' : 'Spots Available.';
+      document.getElementById('spotsLabel').textContent = left === 0 ? 'Session Full.' : 'Spots Available.';
+      document.querySelector('.spots-desc p').innerHTML = left === 0
+        ? 'All spots are taken. Join the waitlist — <strong>you\'ll be first in if someone drops out.</strong>'
+        : 'First come. First served. <strong>No exceptions.</strong>';
+      document.getElementById('submitBtn').textContent = left === 0 ? 'Join the Waitlist →' : 'Claim Your Spot →';
+      document.querySelector('.section-title').innerHTML = left === 0 ? 'Join the<br>Waitlist.' : 'Claim Your<br>Spot.';
     }
 
     async function loadSession() {
@@ -754,8 +759,12 @@
         if (data.status === 'confirmed') {
           document.getElementById('successDetails').textContent =
             `${sessionData?.date || ''} · ${sessionData?.time || ''} · ${sessionData?.location || ''}`;
+          localStorage.removeItem('dyt_session_' + (SESSION_ID || 'default'));
+          localStorage.removeItem('dyt_sessions');
           showState('stateSuccess');
         } else if (data.status === 'waitlist') {
+          localStorage.removeItem('dyt_session_' + (SESSION_ID || 'default'));
+          localStorage.removeItem('dyt_sessions');
           showState('stateWaitlist');
         } else {
           btn.textContent = 'Claim Your Spot →';
