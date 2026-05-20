@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYT — Cancel Your Spot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --black: #080808;
+      --white: #ffffff;
+      --orange: #FF4400;
+      --rule: rgba(255,255,255,0.1);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      mix-blend-mode: overlay;
+    }
+
+    nav {
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+    }
+
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--white); }
+
+    .main {
+      padding: 80px 40px;
+      max-width: 560px;
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 8vw, 80px);
+      line-height: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .sub {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      line-height: 2;
+      margin-bottom: 48px;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    .field label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      padding: 16px 20px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus { border-color: rgba(255,255,255,0.4); }
+    .field input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .cancel-btn {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .cancel-btn:hover { border-color: var(--white); }
+    .cancel-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .note {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.2);
+      line-height: 1.9;
+    }
+
+    /* States */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    .outcome {
+      padding: 80px 40px;
+      max-width: 560px;
+    }
+
+    .outcome-tag {
+      font-size: 10px;
+      letter-spacing: 0.5em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .outcome-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 8vw, 72px);
+      line-height: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .outcome-sub {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 40px;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+    }
+
+    .footer-tag {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.15);
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      nav, .main, .outcome, footer { padding-left: 24px; padding-right: 24px; }
+      .main { padding-top: 60px; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">DYT.</a>
+    <a href="sessions.html" class="nav-back">← Sessions</a>
+  </nav>
+
+  <!-- FORM STATE -->
+  <div id="stateForm" class="state active">
+    <div class="main">
+      <div class="label">Cancel Your Spot</div>
+      <h1 class="title">Can't Make<br>It?</h1>
+      <p class="sub">No problem — release your spot so someone<br>on the waitlist can take it.</p>
+
+      <div class="field">
+        <label>Instagram Handle</label>
+        <input type="text" id="handleInput" placeholder="@yourhandle" autocomplete="off">
+      </div>
+
+      <button class="cancel-btn" id="cancelBtn" onclick="cancelSpot()">Release My Spot →</button>
+
+      <p class="note">
+        By releasing your spot you confirm you can no longer attend.<br>
+        No-shows without notice sit out the next drop. No exceptions.
+      </p>
+    </div>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="stateSuccess" class="state">
+    <div class="outcome">
+      <div class="outcome-tag">Spot Released</div>
+      <h1 class="outcome-title">You're Good.<br>See You Next<br>Time.</h1>
+      <p class="outcome-sub">Your spot has been released and someone<br>from the waitlist has been notified.<br><br>We'll see you at the next drop.</p>
+    </div>
+  </div>
+
+  <!-- NOT FOUND STATE -->
+  <div id="stateNotFound" class="state">
+    <div class="outcome">
+      <div class="outcome-tag">Not Found</div>
+      <h1 class="outcome-title">Handle Not<br>Found.</h1>
+      <p class="outcome-sub">We couldn't find a confirmed registration for that handle.<br><br>Make sure you're entering the same handle you used to register.</p>
+    </div>
+  </div>
+
+  <!-- ALREADY CANCELLED STATE -->
+  <div id="stateAlready" class="state">
+    <div class="outcome">
+      <div class="outcome-tag">Already Done</div>
+      <h1 class="outcome-title">Already<br>Cancelled.</h1>
+      <p class="outcome-sub">Your spot has already been released.<br><br>We'll see you at the next drop.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">DYT.</div>
+    <div class="footer-tag">For Hoopers. By Hoopers. DYT Family.</div>
+  </footer>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzk-8sSCLqFDAaArFR4dS8hx3fQlSQekBTuSzJyCQaXwF_5yd3HNpjfiQ2vbyWIYCF/exec';
+
+    // Pre-fill handle from URL param if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const preHandle = urlParams.get('handle');
+    const preSession = urlParams.get('session');
+    if (preHandle) document.getElementById('handleInput').value = preHandle;
+
+    function showState(id) {
+      document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    async function cancelSpot() {
+      const btn    = document.getElementById('cancelBtn');
+      const handle = document.getElementById('handleInput').value.trim().replace(/^@/, '');
+      if (!handle) return;
+
+      btn.textContent = 'Releasing...';
+      btn.disabled    = true;
+
+      try {
+        const url = `${SCRIPT_URL}?action=cancel_spot&handle=${encodeURIComponent(handle)}${preSession ? '&session=' + encodeURIComponent(preSession) : ''}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'cancelled') {
+          showState('stateSuccess');
+        } else if (data.status === 'not_found') {
+          showState('stateNotFound');
+        } else if (data.status === 'already_cancelled') {
+          showState('stateAlready');
+        } else {
+          btn.textContent = 'Release My Spot →';
+          btn.disabled    = false;
+          alert('Something went wrong. Please try again.');
+        }
+      } catch(err) {
+        btn.textContent = 'Release My Spot →';
+        btn.disabled    = false;
+        alert('Connection error. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html>
