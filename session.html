@@ -673,8 +673,9 @@
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8xI7Vpy20JndXVdGRNHCdsl17xAZ4USMWU8FnXQOz4tndLWdYcGtnD8K9hOsxgJVe/exec';
 
-    // Read session ID from URL — defaults to null (legacy path) if not provided
-    const SESSION_ID = new URLSearchParams(window.location.search).get('id') || null;
+    const SESSION_ID     = new URLSearchParams(window.location.search).get('id') || null;
+    const PAYMENT_STATUS = new URLSearchParams(window.location.search).get('payment') || null;
+    const PAID_HANDLE    = new URLSearchParams(window.location.search).get('handle') || null;
 
     let sessionData = null;
 
@@ -748,9 +749,44 @@
 
       if (!name || !handle || !email) return;
 
-      btn.textContent = 'Claiming...';
+      btn.textContent = 'Processing...';
       btn.disabled    = true;
 
+      // Check if this is a paid session
+      const sessionPrice = sessionData?.price || 0;
+
+      if (sessionPrice > 0) {
+        // Paid session — redirect to Stripe Checkout
+        try {
+          const res = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name, handle, email, first,
+              sessionId: SESSION_ID,
+              sessionName: sessionData?.sessionName || '',
+              sessionDate: sessionData?.date || '',
+              sessionTime: sessionData?.time || '',
+              amount: Math.round(sessionPrice * 100)
+            })
+          });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            btn.textContent = 'Claim Your Spot →';
+            btn.disabled    = false;
+            alert('Payment setup failed. Please try again.');
+          }
+        } catch(err) {
+          btn.textContent = 'Claim Your Spot →';
+          btn.disabled    = false;
+          alert('Connection error. Please try again.');
+        }
+        return;
+      }
+
+      // Free session — register directly
       try {
         const idParam = SESSION_ID ? `&id=${encodeURIComponent(SESSION_ID)}` : '';
         const url  = `${SCRIPT_URL}?action=session_register${idParam}&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}&email=${encodeURIComponent(email)}&first=${first}`;
@@ -779,7 +815,18 @@
       }
     }
 
-    loadSession();
+    // Handle Stripe payment return
+    if (PAYMENT_STATUS === 'success' && PAID_HANDLE) {
+      document.getElementById('successDetails').textContent =
+        `Payment confirmed · Your spot is secured`;
+      localStorage.removeItem('dyt_session_' + (SESSION_ID || 'default'));
+      localStorage.removeItem('dyt_sessions');
+      showState('stateSuccess');
+    } else if (PAYMENT_STATUS === 'cancelled') {
+      loadSession();
+    } else {
+      loadSession();
+    }
   </script>
 
 </body>

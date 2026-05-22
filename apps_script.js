@@ -98,7 +98,7 @@ function doGet(e) {
       const id = String(row[0]).trim();
       const maxSpots = parseInt(row[5] || 10);
       const confirmed = confirmedMap[id] || 0;
-      sessions.push({ id, name: row[1] || '', date: row[2] || '', time: row[3] || '', location: row[4] || '', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status: String(row[6] || 'soon').toLowerCase().trim(), dropDate: row[7] || '', dropTime: row[8] || '' });
+      sessions.push({ id, name: row[1] || '', date: row[2] || '', time: row[3] || '', location: row[4] || '', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status: String(row[6] || 'soon').toLowerCase().trim(), dropDate: row[7] || '', dropTime: row[8] || '', price: parseFloat(row[9] || 0) });
     }
     return response(sessions);
   }
