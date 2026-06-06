@@ -1,5 +1,7 @@
 const Stripe = require('stripe');
 
+module.exports.config = { api: { bodyParser: false } };
+
 const SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
 module.exports = async (req, res) => {
