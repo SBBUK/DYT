@@ -622,13 +622,6 @@
         </div>`;
     }
 
-    // Show example sessions instantly while API loads
-    const exampleSessions = [
-      { id: '1', name: 'DYT Breakfast Club', date: '19/05', time: '7:00 AM', location: 'Roehampton Sport & Fitness Centre', maxSpots: 10, confirmed: 2, spotsLeft: 8, status: 'live', dropDate: '17/05', dropTime: '19:00' },
-      { id: '2', name: 'DYT Breakfast Club', date: '26/05', time: '7:00 AM', location: 'Roehampton Sport & Fitness Centre', maxSpots: 10, confirmed: 0, spotsLeft: 10, status: 'soon', dropDate: '24/05', dropTime: '19:00' },
-      { id: '3', name: 'DYT Breakfast Club', date: '02/06', time: '7:00 AM', location: 'Roehampton Sport & Fitness Centre', maxSpots: 10, confirmed: 0, spotsLeft: 10, status: 'soon', dropDate: '31/05', dropTime: '19:00' },
-    ];
-
     function renderSessions(sessions) {
       const container = document.getElementById('sessionsContainer');
       const active = sessions.filter(s => s.status !== 'closed');
@@ -696,7 +689,7 @@
       });
     }
 
-    // Load from cache instantly if available, otherwise show examples
+    // Load from cache instantly if available
     const cached = localStorage.getItem('dyt_sessions');
     if (cached) {
       try {
@@ -704,11 +697,8 @@
         if (Array.isArray(cachedSessions) && cachedSessions.length > 0) {
           renderSessions(cachedSessions);
           startCountdowns(cachedSessions);
-        } else { renderSessions(exampleSessions); startCountdowns(exampleSessions); }
-      } catch(e) { renderSessions(exampleSessions); startCountdowns(exampleSessions); }
-    } else {
-      renderSessions(exampleSessions);
-      startCountdowns(exampleSessions);
+        }
+      } catch(e) {}
     }
 
     async function loadSessions() {
