@@ -960,7 +960,7 @@
   <script>
     // ── Pull live session data from sheet ──
     (async function() {
-      const SCRIPT = 'https://script.google.com/macros/s/AKfycbwk0R5aJ0KB4lXmnQkOe6l2xZLAnPCIwHU1pF2sPnmt_mBi0mIufADP4XlNH9BrJYBM/exec';
+      const SCRIPT = 'https://script.google.com/macros/s/AKfycbxlOcq4wuoW3JRhawEkJiSj8MlaA3MgfrAnEOqP-EzhWsd4ezVPhRRMksTD0PquS1Xk/exec';
       try {
         const res      = await fetch(`${SCRIPT}?action=sessions_list`);
         const sessions = await res.json();
