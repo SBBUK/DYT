@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const { name, handle, email, first, sessionId, sessionName, sessionDate, sessionTime, amount } = req.body;
+  const { name, handle, email, first, sessionId, sessionName, sessionDate, sessionTime, sessionLocation, amount } = req.body;
 
   if (!name || !handle || !email || !sessionId) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
           currency: 'gbp',
           product_data: {
             name: sessionName || 'DYT Session',
-            description: sessionDate + ' · ' + sessionTime + ' · Roehampton Sport & Fitness Centre',
+            description: sessionDate + ' · ' + sessionTime + (sessionLocation ? ' · ' + sessionLocation : ''),
           },
           unit_amount: amount || 500, // £5.00 in pence
         },

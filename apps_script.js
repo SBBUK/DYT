@@ -119,7 +119,7 @@ function doGet(e) {
       const isActive  = status === 'live';
       const regData   = regSheet.getDataRange().getValues();
       const confirmed = regData.filter((row, i) => i > 0 && String(row[6]).trim() === String(sessionId).trim() && row[4] === 'Confirmed').length;
-      return response({ isActive, id: String(sessionRow[0]).trim(), sessionName: sessionRow[1] || 'DYT Session', date: sessionRow[2] || '', time: sessionRow[3] || '', location: sessionRow[4] || 'Roehampton Sport & Fitness Centre', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status });
+      return response({ isActive, id: String(sessionRow[0]).trim(), sessionName: sessionRow[1] || 'DYT Session', date: sessionRow[2] || '', time: sessionRow[3] || '', location: sessionRow[4] || 'Roehampton Sport & Fitness Centre', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status, price: parseFloat(sessionRow[9] || 0) });
     }
     const configSheet = getOrCreateSheet('Session Config', ['Field', 'Value']);
     const regSheet    = getOrCreateSheet('Session Registrations', ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID']);
@@ -240,21 +240,21 @@ function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow,
   if (status === 'Confirmed') {
     MailApp.sendEmail({
       to: email,
-      name: "DYT Breakfast Club",
+      name: sName || "DYT Breakfast Club",
       subject: "You're In — " + sName + " · " + sDate,
       body: (first ? "You're in. Welcome to the family." : "You're in. Welcome back, family.") + "\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Give 12 hours notice.\nNo-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else if (noShow) {
     MailApp.sendEmail({
       to: email,
-      name: "DYT Breakfast Club",
+      name: sName || "DYT Breakfast Club",
       subject: "Waitlist — " + sName + " · " + sDate,
       body: "You're on the waitlist for this drop.\n\nYou previously missed a session without giving 12 hours notice.\nAs a result you've been moved to the waitlist for this drop.\n\nIf a spot opens up we'll be in touch.\nAttend this session and you'll be fully reinstated for future drops.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else {
     MailApp.sendEmail({
       to: email,
-      name: "DYT Breakfast Club",
+      name: sName || "DYT Breakfast Club",
       subject: "Waitlist — " + sName + " · " + sDate,
       body: "All spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
