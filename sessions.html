@@ -619,8 +619,8 @@
             </div>
             <div class="card-meta" style="margin-top:8px;">
               <div class="card-meta-item">
-                <div class="card-meta-label">Entry</div>
-                <div class="card-meta-value" style="${price && price > 0 ? 'color:var(--orange)' : ''}">${price && price > 0 ? '£' + price : 'Free'}</div>
+                <div class="card-meta-label">${isClosed ? 'Status' : 'Entry'}</div>
+                <div class="card-meta-value" style="${isClosed || (price && price > 0) ? 'color:var(--orange)' : ''}">${isClosed ? 'Coming Soon' : (price && price > 0 ? '£' + price : 'Free')}</div>
               </div>
             </div>
             ${pips}

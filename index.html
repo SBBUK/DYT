@@ -682,7 +682,7 @@
           <div class="session-col">
             <div class="session-col-label">Location</div>
             <div class="session-col-value" id="homeSessionLocation" style="font-size:38px;">Roehampton</div>
-            <div class="session-col-sub">Sport & Fitness Centre</div>
+            <div class="session-col-sub" id="homeSessionLocationSub">Sport & Fitness Centre</div>
           </div>
         </div>
 
@@ -973,7 +973,12 @@
         document.getElementById('homeSessionDate').textContent  = live.date  || '—';
         document.getElementById('homeSessionTime').textContent  = live.time  || '—';
         const locEl = document.getElementById('homeSessionLocation');
-        if (locEl) locEl.textContent = (live.location || '').replace('Sport & Fitness Centre', '').trim() || live.location;
+        const subEl = document.getElementById('homeSessionLocationSub');
+        if (locEl && live.location) {
+          const locParts = live.location.trim().split(' ');
+          locEl.textContent = locParts[0];
+          if (subEl) subEl.textContent = locParts.slice(1).join(' ');
+        }
 
         const spots = Math.max(0, live.maxSpots - live.confirmed);
         document.getElementById('homeSessionSpots').textContent      = spots;
