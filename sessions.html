@@ -201,6 +201,7 @@
 
     .card-bar.bar-live   { background: var(--orange); }
     .card-bar.bar-soon   { background: rgba(255,255,255,0.1); }
+    .card-bar.bar-tba    { background: rgba(255,255,255,0.1); }
     .card-bar.bar-closed { background: transparent; }
 
     /* Card body */
@@ -263,6 +264,12 @@
     }
 
     .badge-soon {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.35);
+    }
+
+    .badge-tba {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.12);
       color: rgba(255,255,255,0.35);
@@ -524,7 +531,7 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlOcq4wuoW3JRhawEkJiSj8MlaA3MgfrAnEOqP-EzhWsd4ezVPhRRMksTD0PquS1Xk/exec';
 
     function buildPips(confirmed, maxSpots, status) {
-      if (status === 'closed') return '';
+      if (status === 'closed' || status === 'tba') return '';
       let html = '<div class="spots-pips">';
       for (let i = 0; i < maxSpots; i++) {
         html += `<div class="spot-pip${i < confirmed ? ' taken' : ''}"></div>`;
@@ -549,10 +556,11 @@
       const isClosed = effectiveStatus === 'closed';
       const isLive   = effectiveStatus === 'live';
       const isSoon   = effectiveStatus === 'soon';
+      const isTba    = effectiveStatus === 'tba';
 
       const barClass    = `bar-${effectiveStatus}`;
       const badgeClass  = `badge-${effectiveStatus}`;
-      const badgeLabel  = isLive ? 'LIVE — DROP OPEN' : isSoon ? 'DROP COMING SOON' : 'CLOSED';
+      const badgeLabel  = isLive ? 'LIVE — DROP OPEN' : isSoon ? 'DROP COMING SOON' : isTba ? 'NEXT DROP TBC' : 'CLOSED';
       const cardClass   = isClosed ? 'session-card card-closed' : 'session-card';
 
       const isFull = isLive && spotsLeft === 0;
@@ -563,7 +571,9 @@
         ? `<a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim">${ctaLabel}</a>`
         : isSoon
           ? `<span class="btn-soon">Drop Coming Soon</span>`
-          : `<span class="btn-closed">Closed</span>`;
+          : isTba
+            ? `<span class="btn-soon">Stay Tuned</span>`
+            : `<span class="btn-closed">Closed</span>`;
 
       const ctaMobile = isLive
         ? `<div class="card-body-mobile-cta"><a href="session.html?id=${encodeURIComponent(id)}" class="btn-claim" style="display:inline-block;">${ctaLabel}</a></div>`
@@ -596,11 +606,11 @@
             <div class="card-meta">
               <div class="card-meta-item">
                 <div class="card-meta-label">Date</div>
-                <div class="card-meta-value">${date || '—'}</div>
+                <div class="card-meta-value">${isTba ? 'TBC' : (date || '—')}</div>
               </div>
               <div class="card-meta-item">
                 <div class="card-meta-label">Time</div>
-                <div class="card-meta-value">${time || '—'}</div>
+                <div class="card-meta-value">${isTba ? 'TBC' : (time || '—')}</div>
               </div>
               <div class="card-meta-item">
                 <div class="card-meta-label">Location</div>

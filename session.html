@@ -805,6 +805,10 @@
           localStorage.removeItem('dyt_session_' + (SESSION_ID || 'default'));
           localStorage.removeItem('dyt_sessions');
           showState('stateWaitlist');
+        } else if (data.status === 'not_open') {
+          btn.textContent = 'Claim Your Spot →';
+          btn.disabled    = false;
+          alert(data.message || 'Sign-ups open soon!');
         } else {
           btn.textContent = 'Claim Your Spot →';
           btn.disabled    = false;

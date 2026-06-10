@@ -126,7 +126,7 @@ function nextMilestone(){
   document.getElementById('ov').classList.remove('show');
   if(queue.length===0){done();return}
   const m=queue.shift();
-  const icons={'DYT Family':'⭐','SIMPLY Drop':'🔥','Elite — Full Kit':'👑','Legendary':'🏆'};
+  const icons={'DYT Family':'⭐','DYT Shirt':'🔥','Full DYT Kit':'👑','Legendary':'🏆'};
   document.getElementById('ovIcon').textContent=icons[m.milestone]||'🏆';
   document.getElementById('ovTitle').textContent=m.name+' — '+m.sessions+' sessions!';
   document.getElementById('ovMsg').textContent='Milestone unlocked: '+m.milestone+'\n@'+m.handle;
