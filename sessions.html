@@ -729,6 +729,14 @@
     }
 
     loadSessions();
+
+    // If the browser restores this page from its back/forward cache (e.g.
+    // after registering on a session page and tapping "back"), the original
+    // fetch never completes — re-run it so the list refreshes instead of
+    // staying stuck on "Loading sessions...".
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) loadSessions();
+    });
   </script>
 
 </body>
