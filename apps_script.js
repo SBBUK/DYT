@@ -9,17 +9,17 @@ const REG_HEADERS = ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', '
 
 function getMilestone(sessions) {
   if (sessions >= 100) return 'Legendary';
-  if (sessions >= 50)  return 'Elite — Full Kit';
-  if (sessions >= 25)  return 'SIMPLY Drop';
+  if (sessions >= 50)  return 'Full DYT Kit';
+  if (sessions >= 25)  return 'DYT Shirt';
   if (sessions >= 10)  return 'DYT Family';
   return '';
 }
 
 function getNextMilestone(sessions) {
-  if (sessions < 10)  return { name: 'DYT Family',       target: 10 };
-  if (sessions < 25)  return { name: 'SIMPLY Drop',      target: 25 };
-  if (sessions < 50)  return { name: 'Elite — Full Kit', target: 50 };
-  if (sessions < 100) return { name: 'Legendary',        target: 100 };
+  if (sessions < 10)  return { name: 'DYT Family',   target: 10 };
+  if (sessions < 25)  return { name: 'DYT Shirt',    target: 25 };
+  if (sessions < 50)  return { name: 'Full DYT Kit', target: 50 };
+  if (sessions < 100) return { name: 'Legendary',    target: 100 };
   return { name: 'Maxed Out', target: 100 };
 }
 
@@ -65,6 +65,16 @@ function parseDropDateTime(dropDate, dropTime) {
     }
     return new Date(year, month - 1, day, h, min, 0);
   } catch(e) { return null; }
+}
+
+function formatTime12h(timeStr) {
+  const m = String(timeStr).match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return timeStr;
+  let h = parseInt(m[1]);
+  const min = m[2];
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return min === '00' ? `${h}${ampm}` : `${h}:${min}${ampm}`;
 }
 
 function isDropLive(sessionRow) {
@@ -122,6 +132,26 @@ function notifyPromotion(promotedRow, sessionId) {
     sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes');
   } catch (err) {
     Logger.log(err);
+  }
+}
+
+// Runs fn(regData) under a script-wide lock and appends the resulting row
+// (if any) before releasing it, so two simultaneous registrations can't
+// both read the same "confirmed" count and overbook past maxSpots.
+// fn must return either { duplicate: <row> } or { regStatus, confirmed, newRow }.
+function withRegistrationLock(regSheet, fn) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (err) {
+    return { error: true };
+  }
+  try {
+    const result = fn(regSheet.getDataRange().getValues());
+    if (!result.duplicate) regSheet.appendRow(result.newRow);
+    return result;
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -203,16 +233,22 @@ function doGet(e) {
         if (String(sessionsData[i][0]).trim() === String(sessionId).trim()) { sessionRow = sessionsData[i]; break; }
       }
       if (!sessionRow) return response({ status: 'error', message: 'Session not found' });
-      if (!isDropLive(sessionRow)) return response({ status: 'error', message: 'Session is not open' });
+      if (!isDropLive(sessionRow)) {
+        const dropTime = formatTime12h(sessionRow[8] || '');
+        return response({ status: 'not_open', message: dropTime ? `Come back at ${dropTime}!` : 'Sign-ups open soon!' });
+      }
       const maxSpots = parseInt(sessionRow[5] || 10);
-      const regData  = regSheet.getDataRange().getValues();
-      const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && String(row[6] || '').trim() === String(sessionId).trim() && isActiveReg(row[4]));
-      if (duplicate) return response({ status: duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-      const confirmed = regData.filter((row, i) => i > 0 && String(row[6]).trim() === String(sessionId).trim() && row[4] === 'Confirmed').length;
-      const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
-      regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, sessionId, paymentIntent]);
-      try { if (email) sendConfirmationEmail(email, regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first); } catch(err) { Logger.log(err); }
-      return response({ status: regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - confirmed - 1), noShow });
+      const result = withRegistrationLock(regSheet, (regData) => {
+        const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && String(row[6] || '').trim() === String(sessionId).trim() && isActiveReg(row[4]));
+        if (duplicate) return { duplicate };
+        const confirmed = regData.filter((row, i) => i > 0 && String(row[6]).trim() === String(sessionId).trim() && row[4] === 'Confirmed').length;
+        const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
+        return { regStatus, confirmed, newRow: [new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, sessionId, paymentIntent] };
+      });
+      if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
+      if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
+      try { if (email) sendConfirmationEmail(email, result.regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first); } catch(err) { Logger.log(err); }
+      return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
     }
     const configSheet = getOrCreateSheet('Session Config', ['Field', 'Value']);
     const config = {};
@@ -220,14 +256,17 @@ function doGet(e) {
     const isActive = config['is_active'] === true || config['is_active'] === 'TRUE' || config['is_active'] === 'true';
     if (!isActive) return response({ status: 'error', message: 'No active session' });
     const maxSpots = parseInt(config['max_spots'] || 10);
-    const regData  = regSheet.getDataRange().getValues();
-    const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && isActiveReg(row[4]));
-    if (duplicate) return response({ status: duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-    const confirmed = regData.filter((row, i) => i > 0 && row[4] === 'Confirmed').length;
-    const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
-    regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, '', paymentIntent]);
-    try { if (email) sendConfirmationEmail(email, regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first); } catch(err) { Logger.log(err); }
-    return response({ status: regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - confirmed - 1), noShow });
+    const result = withRegistrationLock(regSheet, (regData) => {
+      const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && isActiveReg(row[4]));
+      if (duplicate) return { duplicate };
+      const confirmed = regData.filter((row, i) => i > 0 && row[4] === 'Confirmed').length;
+      const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
+      return { regStatus, confirmed, newRow: [new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, '', paymentIntent] };
+    });
+    if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
+    if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
+    try { if (email) sendConfirmationEmail(email, result.regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first); } catch(err) { Logger.log(err); }
+    return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
   }
 
   if (action === 'cancel_spot') {
@@ -279,9 +318,15 @@ function doGet(e) {
 
     const wasConfirmed = row[4] === 'Confirmed';
     const sessionId    = String(row[6] || '').trim();
+    const email        = row[5];
 
     const promoted = releaseSpot(regSheet, targetRow + 1, sessionId, 'Refunded', wasConfirmed);
     if (promoted) notifyPromotion(promoted, sessionId);
+
+    const sessionRow = getSessionRow(sessionId);
+    if (sessionRow) {
+      try { sendRefundEmail(email, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[9]); } catch (err) { Logger.log(err); }
+    }
 
     return response({ status: 'refunded' });
   }
@@ -367,6 +412,16 @@ function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow,
       body: "All spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   }
+}
+
+function sendRefundEmail(email, sName, sDate, sTime, price) {
+  if (!email) return;
+  MailApp.sendEmail({
+    to: email,
+    name: sName || "DYT Breakfast Club",
+    subject: "Refund Processed — " + sName + " · " + sDate,
+    body: "Your payment for " + sName + " on " + sDate + " at " + sTime + " has been refunded" + (price ? " (£" + price + ")" : "") + ".\n\nYour spot has been released. If you'd still like to come, you're welcome to book another session.\n\nFor Hoopers. By Hoopers. DYT Family."
+  });
 }
 
 function testEmail() {

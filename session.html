@@ -812,7 +812,7 @@
         } else {
           btn.textContent = 'Claim Your Spot →';
           btn.disabled    = false;
-          alert('Something went wrong. Please try again.');
+          alert(data.message || 'Something went wrong. Please try again.');
         }
       } catch(err) {
         btn.textContent = 'Claim Your Spot →';
