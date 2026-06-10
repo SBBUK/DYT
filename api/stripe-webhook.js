@@ -33,12 +33,27 @@ module.exports = async (req, res) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const { name, handle, email, first, sessionId } = session.metadata;
+    const paymentIntent = session.payment_intent || '';
 
     try {
-      const url = `${SCRIPT_URL}?action=session_register&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}&email=${encodeURIComponent(email)}&first=${first}&id=${encodeURIComponent(sessionId)}&paid=true`;
+      const url = `${SCRIPT_URL}?action=session_register&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}&email=${encodeURIComponent(email)}&first=${first}&id=${encodeURIComponent(sessionId)}&paid=true&payment_intent=${encodeURIComponent(paymentIntent)}`;
       await fetch(url);
     } catch (err) {
       console.error('Apps Script error:', err);
+    }
+  }
+
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    const paymentIntent = charge.payment_intent || '';
+
+    if (paymentIntent) {
+      try {
+        const url = `${SCRIPT_URL}?action=session_refund&payment_intent=${encodeURIComponent(paymentIntent)}`;
+        await fetch(url);
+      } catch (err) {
+        console.error('Apps Script refund error:', err);
+      }
     }
   }
 

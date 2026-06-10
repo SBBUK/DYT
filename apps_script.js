@@ -4,6 +4,9 @@
 
 const SHEET_ID = '1-Yb9u6h0v6BQffZqOhV7kjYXPtSjqqPWC0cyzgKxWCY';
 
+const SESSIONS_HEADERS = ['ID', 'Name', 'Date', 'Time', 'Location', 'Max Spots', 'Status', 'Drop Date', 'Drop Time', 'Price'];
+const REG_HEADERS = ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID', 'Payment Intent'];
+
 function getMilestone(sessions) {
   if (sessions >= 100) return 'Legendary';
   if (sessions >= 50)  return 'Elite — Full Kit';
@@ -31,7 +34,16 @@ function getOrCreateSheet(name, headers) {
     sheet = ss.insertSheet(name);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    return sheet;
   }
+  // Migrate: add any missing headers (e.g. new columns added after the sheet was first created)
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  const currentHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  headers.forEach((header, i) => {
+    if (currentHeaders[i] !== header) {
+      sheet.getRange(1, i + 1).setValue(header).setFontWeight('bold');
+    }
+  });
   return sheet;
 }
 
@@ -75,12 +87,50 @@ function isNoShow(handle) {
   return false;
 }
 
+function getSessionRow(sessionId) {
+  const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
+  const sessionsData  = sessionsSheet.getDataRange().getValues();
+  for (let i = 1; i < sessionsData.length; i++) {
+    if (String(sessionsData[i][0]).trim() === String(sessionId).trim()) return sessionsData[i];
+  }
+  return null;
+}
+
+// Marks a registration row with newStatus, and if it freed up a Confirmed
+// spot, promotes the longest-waiting person on the waitlist for that
+// session. Returns the promoted row (or null if no one was promoted).
+function releaseSpot(regSheet, rowIndex, sessionId, newStatus, promote) {
+  regSheet.getRange(rowIndex, 5).setValue(newStatus);
+  if (!promote) return null;
+
+  const data = regSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[6] || '').trim() === String(sessionId).trim() && row[4] === 'Waitlist') {
+      regSheet.getRange(i + 1, 5).setValue('Confirmed');
+      return row;
+    }
+  }
+  return null;
+}
+
+function notifyPromotion(promotedRow, sessionId) {
+  const sessionRow = getSessionRow(sessionId);
+  const email = promotedRow[5];
+  if (!sessionRow || !email) return;
+  try {
+    sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes');
+  } catch (err) {
+    Logger.log(err);
+  }
+}
+
 function doGet(e) {
   const action = e.parameter.action || '';
 
   if (action === 'sessions_list') {
-    const sessionsSheet = getOrCreateSheet('Sessions', ['ID', 'Name', 'Date', 'Time', 'Location', 'Max Spots', 'Status', 'Drop Date', 'Drop Time']);
-    const regSheet      = getOrCreateSheet('Session Registrations', ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID']);
+    const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
+    const regSheet      = getOrCreateSheet('Session Registrations', REG_HEADERS);
     const sessionsData  = sessionsSheet.getDataRange().getValues();
     const regData       = regSheet.getDataRange().getValues();
     const confirmedMap  = {};
@@ -106,8 +156,8 @@ function doGet(e) {
   if (action === 'session_info') {
     const sessionId = e.parameter.id || null;
     if (sessionId) {
-      const sessionsSheet = getOrCreateSheet('Sessions', ['ID', 'Name', 'Date', 'Time', 'Location', 'Max Spots', 'Status', 'Drop Date', 'Drop Time']);
-      const regSheet      = getOrCreateSheet('Session Registrations', ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID']);
+      const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
+      const regSheet      = getOrCreateSheet('Session Registrations', REG_HEADERS);
       const sessionsData  = sessionsSheet.getDataRange().getValues();
       let sessionRow = null;
       for (let i = 1; i < sessionsData.length; i++) {
@@ -116,13 +166,13 @@ function doGet(e) {
       if (!sessionRow) return response({ error: 'Session not found', isActive: false });
       const maxSpots  = parseInt(sessionRow[5] || 10);
       const status    = String(sessionRow[6] || 'soon').toLowerCase().trim();
-      const isActive  = status === 'live';
+      const isActive  = isDropLive(sessionRow);
       const regData   = regSheet.getDataRange().getValues();
       const confirmed = regData.filter((row, i) => i > 0 && String(row[6]).trim() === String(sessionId).trim() && row[4] === 'Confirmed').length;
       return response({ isActive, id: String(sessionRow[0]).trim(), sessionName: sessionRow[1] || 'DYT Session', date: sessionRow[2] || '', time: sessionRow[3] || '', location: sessionRow[4] || 'Roehampton Sport & Fitness Centre', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status, price: parseFloat(sessionRow[9] || 0) });
     }
     const configSheet = getOrCreateSheet('Session Config', ['Field', 'Value']);
-    const regSheet    = getOrCreateSheet('Session Registrations', ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID']);
+    const regSheet    = getOrCreateSheet('Session Registrations', REG_HEADERS);
     const config = {};
     configSheet.getDataRange().getValues().forEach((row, i) => { if (i > 0 && row[0]) config[row[0]] = row[1]; });
     const maxSpots  = parseInt(config['max_spots'] || 10);
@@ -133,18 +183,20 @@ function doGet(e) {
   }
 
   if (action === 'session_register') {
-    const name      = e.parameter.name    || '';
-    const handle    = ('@' + (e.parameter.handle || '').replace(/^@/, '')).toLowerCase();
-    const first     = e.parameter.first === 'true';
-    const email     = e.parameter.email  || '';
-    const sessionId = e.parameter.id     || null;
+    const name          = e.parameter.name    || '';
+    const handle        = ('@' + (e.parameter.handle || '').replace(/^@/, '')).toLowerCase();
+    const first         = e.parameter.first === 'true';
+    const email         = e.parameter.email  || '';
+    const sessionId     = e.parameter.id     || null;
+    const paymentIntent = e.parameter.payment_intent || '';
     if (!name || !handle || handle === '@') return response({ status: 'error', message: 'Missing name or handle' });
 
     const noShow = isNoShow(handle);
+    const isActiveReg = (status) => status === 'Confirmed' || status === 'Waitlist';
 
-    const regSheet = getOrCreateSheet('Session Registrations', ['Timestamp', 'Name', 'Handle', 'First Session', 'Status', 'Email', 'Session_ID']);
+    const regSheet = getOrCreateSheet('Session Registrations', REG_HEADERS);
     if (sessionId) {
-      const sessionsSheet = getOrCreateSheet('Sessions', ['ID', 'Name', 'Date', 'Time', 'Location', 'Max Spots', 'Status', 'Drop Date', 'Drop Time']);
+      const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
       const sessionsData  = sessionsSheet.getDataRange().getValues();
       let sessionRow = null;
       for (let i = 1; i < sessionsData.length; i++) {
@@ -154,11 +206,11 @@ function doGet(e) {
       if (!isDropLive(sessionRow)) return response({ status: 'error', message: 'Session is not open' });
       const maxSpots = parseInt(sessionRow[5] || 10);
       const regData  = regSheet.getDataRange().getValues();
-      const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && String(row[6] || '').trim() === String(sessionId).trim());
+      const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && String(row[6] || '').trim() === String(sessionId).trim() && isActiveReg(row[4]));
       if (duplicate) return response({ status: duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
       const confirmed = regData.filter((row, i) => i > 0 && String(row[6]).trim() === String(sessionId).trim() && row[4] === 'Confirmed').length;
       const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
-      regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, sessionId]);
+      regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, sessionId, paymentIntent]);
       try { if (email) sendConfirmationEmail(email, regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first); } catch(err) { Logger.log(err); }
       return response({ status: regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - confirmed - 1), noShow });
     }
@@ -169,13 +221,69 @@ function doGet(e) {
     if (!isActive) return response({ status: 'error', message: 'No active session' });
     const maxSpots = parseInt(config['max_spots'] || 10);
     const regData  = regSheet.getDataRange().getValues();
-    const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle);
+    const duplicate = regData.slice(1).find(row => (row[2] || '').toLowerCase() === handle && isActiveReg(row[4]));
     if (duplicate) return response({ status: duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
     const confirmed = regData.filter((row, i) => i > 0 && row[4] === 'Confirmed').length;
     const regStatus = (noShow || confirmed >= maxSpots) ? 'Waitlist' : 'Confirmed';
-    regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, '']);
+    regSheet.appendRow([new Date(), name, handle, first ? 'Yes' : 'No', regStatus, email, '', paymentIntent]);
     try { if (email) sendConfirmationEmail(email, regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first); } catch(err) { Logger.log(err); }
     return response({ status: regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - confirmed - 1), noShow });
+  }
+
+  if (action === 'cancel_spot') {
+    const handle    = ('@' + (e.parameter.handle || '').replace(/^@/, '')).toLowerCase();
+    const sessionId = e.parameter.session || null;
+    if (!handle || handle === '@') return response({ status: 'error', message: 'Missing handle' });
+
+    const regSheet = getOrCreateSheet('Session Registrations', REG_HEADERS);
+    const data      = regSheet.getDataRange().getValues();
+
+    let activeRow = -1, alreadyCancelled = false;
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if ((row[2] || '').toLowerCase().trim() !== handle) continue;
+      if (sessionId && String(row[6] || '').trim() !== String(sessionId).trim()) continue;
+      if (row[4] === 'Confirmed' || row[4] === 'Waitlist') { activeRow = i; break; }
+      if (row[4] === 'Cancelled' || row[4] === 'Refunded') alreadyCancelled = true;
+    }
+
+    if (activeRow === -1) {
+      return response({ status: alreadyCancelled ? 'already_cancelled' : 'not_found' });
+    }
+
+    const row          = data[activeRow];
+    const wasConfirmed = row[4] === 'Confirmed';
+    const rowSessionId = String(row[6] || '').trim();
+
+    const promoted = releaseSpot(regSheet, activeRow + 1, rowSessionId, 'Cancelled', wasConfirmed);
+    if (promoted) notifyPromotion(promoted, rowSessionId);
+
+    return response({ status: 'cancelled' });
+  }
+
+  if (action === 'session_refund') {
+    const paymentIntent = (e.parameter.payment_intent || '').trim();
+    if (!paymentIntent) return response({ status: 'error', message: 'Missing payment_intent' });
+
+    const regSheet = getOrCreateSheet('Session Registrations', REG_HEADERS);
+    const data      = regSheet.getDataRange().getValues();
+
+    let targetRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][7] || '').trim() === paymentIntent) { targetRow = i; break; }
+    }
+    if (targetRow === -1) return response({ status: 'not_found' });
+
+    const row = data[targetRow];
+    if (row[4] === 'Cancelled' || row[4] === 'Refunded') return response({ status: 'already_cancelled' });
+
+    const wasConfirmed = row[4] === 'Confirmed';
+    const sessionId    = String(row[6] || '').trim();
+
+    const promoted = releaseSpot(regSheet, targetRow + 1, sessionId, 'Refunded', wasConfirmed);
+    if (promoted) notifyPromotion(promoted, sessionId);
+
+    return response({ status: 'refunded' });
   }
 
   if (action === 'all') {
