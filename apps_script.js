@@ -136,7 +136,7 @@ function notifyPromotion(promotedRow, sessionId) {
   const email = promotedRow[5];
   if (!sessionRow || !email) return;
   try {
-    sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes', sessionId, promotedRow[2]);
+    sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes', sessionId, promotedRow[2], true);
   } catch (err) {
     Logger.log(err);
   }
@@ -257,7 +257,7 @@ function doGet(e) {
       });
       if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
       if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-      try { if (email) sendConfirmationEmail(email, result.regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first, sessionId, handle); } catch(err) { Logger.log(err); }
+      try { if (email) sendConfirmationEmail(email, result.regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first, sessionId, handle, false); } catch(err) { Logger.log(err); }
       return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
     }
     const configSheet = getOrCreateSheet('Session Config', ['Field', 'Value']);
@@ -275,7 +275,7 @@ function doGet(e) {
     });
     if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
     if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-    try { if (email) sendConfirmationEmail(email, result.regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first, null, handle); } catch(err) { Logger.log(err); }
+    try { if (email) sendConfirmationEmail(email, result.regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first, null, handle, false); } catch(err) { Logger.log(err); }
     return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
   }
 
@@ -399,14 +399,17 @@ function doPost(e) {
   return response({ error: 'Unknown action' });
 }
 
-function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow, first, sessionId, handle) {
+function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow, first, sessionId, handle, promoted) {
   const releaseUrl = 'https://doyourtingg.com/cancel.html?handle=' + encodeURIComponent(handle || '') + (sessionId ? '&session=' + encodeURIComponent(sessionId) : '');
   if (status === 'Confirmed') {
+    const openingLine = promoted
+      ? "Good news — a spot just opened up and you're confirmed!"
+      : (first ? "You're in. Welcome to the family." : "You're in. Welcome back, family.");
     MailApp.sendEmail({
       to: email,
       name: sName || "DYT Breakfast Club",
       subject: "You're In — " + sName + " · " + sDate,
-      body: (first ? "You're in. Welcome to the family." : "You're in. Welcome back, family.") + "\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Release your spot so someone on the waitlist can take it:\n" + releaseUrl + "\n\nGive 12 hours notice.\nNo-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
+      body: openingLine + "\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Release your spot so someone on the waitlist can take it:\n" + releaseUrl + "\n\nGive 12 hours notice.\nNo-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else if (noShow) {
     MailApp.sendEmail({
