@@ -688,7 +688,7 @@
 
         <div class="rule"></div>
 
-        <div class="spots-block">
+        <div class="spots-block" id="homeSpotsBlock">
           <div class="spots-num" id="homeSessionSpots">10</div>
           <div class="spots-text">
             <h3 id="homeSessionSpotsLabel">Spots<br>Available.</h3>
@@ -696,7 +696,7 @@
           </div>
         </div>
 
-        <a href="sessions.html" class="btn-primary">Claim Your Spot →</a>
+        <a href="sessions.html" class="btn-primary" id="homeSessionCta">Claim Your Spot →</a>
       </div>
 
       <div class="session-how">
@@ -966,9 +966,21 @@
         const sessions = await res.json();
         if (!Array.isArray(sessions)) return;
 
-        // Find the first live session, or fall back to the first soon session
-        const live = sessions.find(s => s.status === 'live') || sessions.find(s => s.status === 'soon');
-        if (!live) return;
+        // Find the first live session, or fall back to the first soon session —
+        // skipping anything that's already happened
+        const upcoming = sessions.filter(s => !s.sessionEnded);
+        const live = upcoming.find(s => s.status === 'live') || upcoming.find(s => s.status === 'soon');
+
+        if (!live) {
+          // Nothing open or scheduled yet — show a generic placeholder instead of stale info
+          document.getElementById('homeSessionDate').textContent = 'TBC';
+          document.getElementById('homeSessionTime').textContent = 'TBC';
+          document.getElementById('homeSessionLocation').textContent = 'TBC';
+          document.getElementById('homeSessionLocationSub').textContent = '';
+          document.getElementById('homeSpotsBlock').style.display = 'none';
+          document.getElementById('homeSessionCta').textContent = 'Stay Tuned →';
+          return;
+        }
 
         document.getElementById('homeSessionDate').textContent  = live.date  || '—';
         document.getElementById('homeSessionTime').textContent  = live.time  || '—';
