@@ -88,6 +88,13 @@ function isDropLive(sessionRow) {
   return dt && new Date() >= dt;
 }
 
+// True once the session's own date/time has passed — separate from the
+// "drop" date/time above, which only controls when sign-ups OPEN.
+function isSessionOver(sessionRow) {
+  const dt = parseDropDateTime(sessionRow[2] || '', sessionRow[3] || '');
+  return dt ? new Date() >= dt : false;
+}
+
 function isNoShow(handle) {
   const sheet = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
   const data  = sheet.getDataRange().getValues();
@@ -129,7 +136,7 @@ function notifyPromotion(promotedRow, sessionId) {
   const email = promotedRow[5];
   if (!sessionRow || !email) return;
   try {
-    sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes');
+    sendConfirmationEmail(email, 'Confirmed', sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], false, promotedRow[3] === 'Yes', sessionId, promotedRow[2]);
   } catch (err) {
     Logger.log(err);
   }
@@ -178,7 +185,7 @@ function doGet(e) {
       const id = String(row[0]).trim();
       const maxSpots = parseInt(row[5] || 10);
       const confirmed = confirmedMap[id] || 0;
-      sessions.push({ id, name: row[1] || '', date: row[2] || '', time: row[3] || '', location: row[4] || '', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status: String(row[6] || 'soon').toLowerCase().trim(), dropDate: row[7] || '', dropTime: row[8] || '', price: parseFloat(row[9] || 0) });
+      sessions.push({ id, name: row[1] || '', date: row[2] || '', time: row[3] || '', location: row[4] || '', maxSpots, confirmed, spotsLeft: Math.max(0, maxSpots - confirmed), status: String(row[6] || 'soon').toLowerCase().trim(), dropDate: row[7] || '', dropTime: row[8] || '', price: parseFloat(row[9] || 0), sessionEnded: isSessionOver(row) });
     }
     return response(sessions);
   }
@@ -233,6 +240,9 @@ function doGet(e) {
         if (String(sessionsData[i][0]).trim() === String(sessionId).trim()) { sessionRow = sessionsData[i]; break; }
       }
       if (!sessionRow) return response({ status: 'error', message: 'Session not found' });
+      if (isSessionOver(sessionRow)) {
+        return response({ status: 'session_ended', message: 'This session has already happened — check the site for the next drop!' });
+      }
       if (!isDropLive(sessionRow)) {
         const dropTime = formatTime12h(sessionRow[8] || '');
         return response({ status: 'not_open', message: dropTime ? `Come back at ${dropTime}!` : 'Sign-ups open soon!' });
@@ -247,7 +257,7 @@ function doGet(e) {
       });
       if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
       if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-      try { if (email) sendConfirmationEmail(email, result.regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first); } catch(err) { Logger.log(err); }
+      try { if (email) sendConfirmationEmail(email, result.regStatus, sessionRow[1], sessionRow[2], sessionRow[3], sessionRow[4], noShow, first, sessionId, handle); } catch(err) { Logger.log(err); }
       return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
     }
     const configSheet = getOrCreateSheet('Session Config', ['Field', 'Value']);
@@ -265,7 +275,7 @@ function doGet(e) {
     });
     if (result.error) return response({ status: 'error', message: 'Busy right now — please try again in a moment.' });
     if (result.duplicate) return response({ status: result.duplicate[4] === 'Confirmed' ? 'confirmed' : 'waitlist', duplicate: true });
-    try { if (email) sendConfirmationEmail(email, result.regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first); } catch(err) { Logger.log(err); }
+    try { if (email) sendConfirmationEmail(email, result.regStatus, config['session_name'], config['date'], config['time'], config['location'], noShow, first, null, handle); } catch(err) { Logger.log(err); }
     return response({ status: result.regStatus.toLowerCase(), spotsLeft: Math.max(0, maxSpots - result.confirmed - 1), noShow });
   }
 
@@ -389,27 +399,28 @@ function doPost(e) {
   return response({ error: 'Unknown action' });
 }
 
-function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow, first) {
+function sendConfirmationEmail(email, status, sName, sDate, sTime, sLoc, noShow, first, sessionId, handle) {
+  const releaseUrl = 'https://doyourtingg.com/cancel.html?handle=' + encodeURIComponent(handle || '') + (sessionId ? '&session=' + encodeURIComponent(sessionId) : '');
   if (status === 'Confirmed') {
     MailApp.sendEmail({
       to: email,
       name: sName || "DYT Breakfast Club",
       subject: "You're In — " + sName + " · " + sDate,
-      body: (first ? "You're in. Welcome to the family." : "You're in. Welcome back, family.") + "\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Give 12 hours notice.\nNo-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
+      body: (first ? "You're in. Welcome to the family." : "You're in. Welcome back, family.") + "\n\nSession: " + sName + "\nDate: " + sDate + "\nTime: " + sTime + "\nLocation: " + sLoc + "\n\nCan't make it? Release your spot so someone on the waitlist can take it:\n" + releaseUrl + "\n\nGive 12 hours notice.\nNo-shows sit out the next drop. No exceptions.\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else if (noShow) {
     MailApp.sendEmail({
       to: email,
       name: sName || "DYT Breakfast Club",
       subject: "Waitlist — " + sName + " · " + sDate,
-      body: "You're on the waitlist for this drop.\n\nYou previously missed a session without giving 12 hours notice.\nAs a result you've been moved to the waitlist for this drop.\n\nIf a spot opens up we'll be in touch.\nAttend this session and you'll be fully reinstated for future drops.\n\nFor Hoopers. By Hoopers. DYT Family."
+      body: "You're on the waitlist for this drop.\n\nYou previously missed a session without giving 12 hours notice.\nAs a result you've been moved to the waitlist for this drop.\n\nIf a spot opens up we'll be in touch.\nAttend this session and you'll be fully reinstated for future drops.\n\nNo longer need this spot? Release it here:\n" + releaseUrl + "\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   } else {
     MailApp.sendEmail({
       to: email,
       name: sName || "DYT Breakfast Club",
       subject: "Waitlist — " + sName + " · " + sDate,
-      body: "All spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nFor Hoopers. By Hoopers. DYT Family."
+      body: "All spots are taken.\n\nYou're on the waitlist for " + sName + " on " + sDate + " at " + sTime + ".\n\nIf a spot opens up we'll be in touch as soon as possible.\n\nNo longer need this spot? Release it here:\n" + releaseUrl + "\n\nFor Hoopers. By Hoopers. DYT Family."
     });
   }
 }
