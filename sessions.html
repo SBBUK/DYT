@@ -642,7 +642,8 @@
       const container = document.getElementById('sessionsContainer');
       const active = sessions.filter(s => s.status !== 'closed' && !s.sessionEnded);
       const closed = sessions.filter(s => s.status === 'closed' || s.sessionEnded);
-      active.sort((a, b) => { if (a.status === 'live' && b.status !== 'live') return -1; if (a.status !== 'live' && b.status === 'live') return 1; return 0; });
+      const statusOrder = { live: 0, soon: 1, tba: 2 };
+      active.sort((a, b) => (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3));
       const liveCount = active.filter(s => s.status === 'live').length;
       const countEl = document.getElementById('sessionsCount');
       if (liveCount > 0) countEl.textContent = `${liveCount} Drop${liveCount === 1 ? '' : 's'} Open Now`;
