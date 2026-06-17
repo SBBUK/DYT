@@ -97,7 +97,7 @@ function isSessionOver(sessionRow) {
 
 function cleanupNoShowList() {
   try {
-    const noShowSheet   = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
+    const noShowSheet   = getOrCreateSheet('No-Show List', ['Handle', 'Date Added']);
     const noShowData    = noShowSheet.getDataRange().getValues();
     if (noShowData.length <= 1) return;
 
@@ -116,7 +116,7 @@ function cleanupNoShowList() {
 
     // Remove any no-show entry where at least one session has ended since they were added
     for (let i = noShowData.length - 1; i >= 1; i--) {
-      const raw       = noShowData[i][2];
+      const raw       = noShowData[i][1];
       if (!raw) continue;
       const addedDate = raw instanceof Date ? raw : new Date(raw);
       if (isNaN(addedDate)) continue;
@@ -129,7 +129,7 @@ function cleanupNoShowList() {
 
 function isNoShow(handle) {
   cleanupNoShowList();
-  const sheet = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
+  const sheet = getOrCreateSheet('No-Show List', ['Handle', 'Date Added']);
   const data  = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if ((data[i][0] || '').toLowerCase().trim() === handle.toLowerCase().trim()) return true;
@@ -137,13 +137,12 @@ function isNoShow(handle) {
   return false;
 }
 
-function sendNoShowEmail(email, sessionMissed) {
-  const sessionRef = sessionMissed ? ' (' + sessionMissed + ')' : '';
+function sendNoShowEmail(email) {
   MailApp.sendEmail({
     to: email,
     name: 'DYT',
     subject: 'Missed Session — DYT Family',
-    body: 'You missed your last DYT session' + sessionRef + ' without giving 12 hours notice.\n\nYou\'re still part of the family — but you\'ll automatically be placed on the waitlist when the next drop goes live.\n\nShow up and you\'ll be fully reinstated.\n\nFor Hoopers. By Hoopers. DYT Family.'
+    body: 'You missed your last DYT session without giving 12 hours notice.\n\nYou\'re still part of the family — but you\'ll automatically be placed on the waitlist when the next drop goes live.\n\nShow up and you\'ll be fully reinstated.\n\nFor Hoopers. By Hoopers. DYT Family.'
   });
 }
 
@@ -169,12 +168,9 @@ function onNoShowEntry(e) {
   }
   if (!rowEmail) return;
 
-  const row           = e.range.getRow();
-  const noShowSheet   = e.range.getSheet();
-  const sessionMissed = noShowSheet.getRange(row, 2).getValue() || '';
-  noShowSheet.getRange(row, 3).setValue(new Date()); // auto-stamp date for reinstatement logic
+  e.range.getSheet().getRange(e.range.getRow(), 2).setValue(new Date()); // auto-stamp Date Added for reinstatement logic
   try {
-    sendNoShowEmail(rowEmail, sessionMissed);
+    sendNoShowEmail(rowEmail);
   } catch (err) {
     Logger.log('No-show notification failed for ' + handle + ': ' + err);
   }
