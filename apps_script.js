@@ -95,7 +95,40 @@ function isSessionOver(sessionRow) {
   return dt ? new Date() >= dt : false;
 }
 
+function cleanupNoShowList() {
+  try {
+    const noShowSheet   = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
+    const noShowData    = noShowSheet.getDataRange().getValues();
+    if (noShowData.length <= 1) return;
+
+    const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
+    const sessionsData  = sessionsSheet.getDataRange().getValues();
+
+    // Collect dates of all sessions that have already happened
+    const endedDates = [];
+    for (let i = 1; i < sessionsData.length; i++) {
+      if (isSessionOver(sessionsData[i])) {
+        const dt = parseDropDateTime(sessionsData[i][2], sessionsData[i][3]);
+        if (dt) endedDates.push(dt);
+      }
+    }
+    if (endedDates.length === 0) return;
+
+    // Remove any no-show entry where at least one session has ended since they were added
+    for (let i = noShowData.length - 1; i >= 1; i--) {
+      const raw       = noShowData[i][2];
+      if (!raw) continue;
+      const addedDate = raw instanceof Date ? raw : new Date(raw);
+      if (isNaN(addedDate)) continue;
+      if (endedDates.some(d => d > addedDate)) noShowSheet.deleteRow(i + 1);
+    }
+  } catch (err) {
+    Logger.log('cleanupNoShowList error: ' + err);
+  }
+}
+
 function isNoShow(handle) {
+  cleanupNoShowList();
   const sheet = getOrCreateSheet('No-Show List', ['Handle', 'Session Missed', 'Date Added']);
   const data  = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
@@ -136,7 +169,10 @@ function onNoShowEntry(e) {
   }
   if (!rowEmail) return;
 
-  const sessionMissed = e.range.getSheet().getRange(e.range.getRow(), 2).getValue() || '';
+  const row           = e.range.getRow();
+  const noShowSheet   = e.range.getSheet();
+  const sessionMissed = noShowSheet.getRange(row, 2).getValue() || '';
+  noShowSheet.getRange(row, 3).setValue(new Date()); // auto-stamp date for reinstatement logic
   try {
     sendNoShowEmail(rowEmail, sessionMissed);
   } catch (err) {
