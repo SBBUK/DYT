@@ -652,7 +652,7 @@
       active.forEach(s => { html += buildCard(s); });
       if (closed.length > 0) {
         html += `<div class="closed-section-label">Past Sessions</div><div class="sessions-grid" style="opacity:0.5;">`;
-        closed.forEach(s => { html += buildCard(s); });
+        closed.slice(-1).forEach(s => { html += buildCard(s); });
         html += '</div>';
       }
       html += '</div>';
