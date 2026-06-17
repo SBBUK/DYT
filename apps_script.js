@@ -104,6 +104,46 @@ function isNoShow(handle) {
   return false;
 }
 
+function sendNoShowEmail(email, sessionMissed) {
+  const sessionRef = sessionMissed ? ' (' + sessionMissed + ')' : '';
+  MailApp.sendEmail({
+    to: email,
+    name: 'DYT',
+    subject: 'Missed Session — DYT Family',
+    body: 'You missed your last DYT session' + sessionRef + ' without giving 12 hours notice.\n\nYou\'re still part of the family — but you\'ll automatically be placed on the waitlist when the next drop goes live.\n\nShow up and you\'ll be fully reinstated.\n\nFor Hoopers. By Hoopers. DYT Family.'
+  });
+}
+
+// Installable onEdit trigger — fires when a new handle is added to the No-Show List sheet.
+// Must be registered manually: Apps Script editor → Triggers → Add Trigger →
+// Function: onNoShowEntry, Event source: Spreadsheet, Event type: On edit.
+function onNoShowEntry(e) {
+  if (!e || !e.range) return;
+  if (e.range.getSheet().getName() !== 'No-Show List') return;
+  if (e.range.getColumn() !== 1 || e.range.getNumRows() !== 1) return;
+
+  const handle = String(e.value || '').trim().toLowerCase();
+  if (!handle || e.oldValue) return;
+
+  const regSheet = getOrCreateSheet('Session Registrations', REG_HEADERS);
+  const regData  = regSheet.getDataRange().getValues();
+  let rowEmail = '';
+  for (let i = regData.length - 1; i >= 1; i--) {
+    if (String(regData[i][2] || '').toLowerCase().trim() === handle) {
+      const candidate = String(regData[i][5] || '').trim();
+      if (candidate) { rowEmail = candidate; break; }
+    }
+  }
+  if (!rowEmail) return;
+
+  const sessionMissed = e.range.getSheet().getRange(e.range.getRow(), 2).getValue() || '';
+  try {
+    sendNoShowEmail(rowEmail, sessionMissed);
+  } catch (err) {
+    Logger.log('No-show notification failed for ' + handle + ': ' + err);
+  }
+}
+
 function getSessionRow(sessionId) {
   const sessionsSheet = getOrCreateSheet('Sessions', SESSIONS_HEADERS);
   const sessionsData  = sessionsSheet.getDataRange().getValues();
