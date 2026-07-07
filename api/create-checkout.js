@@ -10,10 +10,16 @@ module.exports = async (req, res) => {
 
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const { name, handle, email, first, sessionId, sessionName, sessionDate, sessionTime, sessionLocation, amount } = req.body;
+  const { name, handle, email, first, sessionId, sessionName, sessionDate, sessionTime, sessionLocation, amount, promoCode } = req.body;
 
   if (!name || !handle || !email || !sessionId) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // Server-side promo validation — SBBMEMBER locks price to £6 (600 pence)
+  let finalAmount = amount || 1000;
+  if ((promoCode || '').toUpperCase() === 'SBBMEMBER' && finalAmount > 600) {
+    finalAmount = 600;
   }
 
   try {
@@ -26,7 +32,7 @@ module.exports = async (req, res) => {
             name: sessionName || 'DYT Session',
             description: sessionDate + ' · ' + sessionTime + (sessionLocation ? ' · ' + sessionLocation : ''),
           },
-          unit_amount: amount || 500, // £5.00 in pence
+          unit_amount: finalAmount,
         },
         quantity: 1,
       }],

@@ -324,6 +324,53 @@
       line-height: 1.9;
     }
 
+    .promo-section { display: none; }
+
+    .promo-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .promo-input-row input {
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .promo-apply-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .promo-apply-btn:hover { background: rgba(255,255,255,0.14); }
+
+    .promo-msg {
+      margin-top: 8px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      display: none;
+      text-transform: uppercase;
+    }
+
+    .promo-link {
+      margin-top: 10px;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+      line-height: 1.8;
+    }
+
+    .promo-link a { color: var(--orange); }
+
     /* right side rules */
     .rules-block { margin-bottom: 40px; }
 
@@ -568,6 +615,16 @@
             <input type="email" id="fieldEmail" placeholder="your@email.com" required autocomplete="email">
           </div>
 
+          <div class="field promo-section" id="promoSection">
+            <label>Member Code <span style="color:rgba(255,255,255,0.2);font-size:8px;letter-spacing:0.1em;">Optional</span></label>
+            <div class="promo-input-row">
+              <input type="text" id="fieldPromo" placeholder="e.g. SBBMEMBER" autocomplete="off">
+              <button type="button" class="promo-apply-btn" onclick="applyPromoCode()">Apply</button>
+            </div>
+            <div class="promo-msg" id="promoMsg"></div>
+            <p class="promo-link">Not a member? <a href="https://simplybritishballers.com" target="_blank">Join the SBB family</a> and get the member rate.</p>
+          </div>
+
           <label class="toggle-row">
             <input type="checkbox" id="fieldFirst">
             <div class="toggle-box"></div>
@@ -678,7 +735,42 @@
     const PAYMENT_STATUS = new URLSearchParams(window.location.search).get('payment') || null;
     const PAID_HANDLE    = new URLSearchParams(window.location.search).get('handle') || null;
 
-    let sessionData = null;
+    let sessionData   = null;
+    let promoApplied  = false;
+    let sessionIsFull = false;
+
+    function updateButtonText() {
+      const btn = document.getElementById('submitBtn');
+      if (!btn) return;
+      if (sessionIsFull) { btn.textContent = 'Join the Waitlist →'; return; }
+      const price = sessionData?.price || 0;
+      if (price > 0) {
+        const display = promoApplied ? 6 : price;
+        btn.textContent = `Pay £${display} · Claim Your Spot →`;
+      } else {
+        btn.textContent = 'Claim Your Spot →';
+      }
+    }
+
+    function applyPromoCode() {
+      const code = (document.getElementById('fieldPromo').value || '').trim().toUpperCase();
+      const msg  = document.getElementById('promoMsg');
+      if (code === 'SBBMEMBER') {
+        promoApplied      = true;
+        msg.style.display = '';
+        msg.style.color   = '#4caf50';
+        msg.textContent   = 'SBBMEMBER applied — £6 member rate';
+      } else if (code === '') {
+        promoApplied      = false;
+        msg.style.display = 'none';
+      } else {
+        promoApplied      = false;
+        msg.style.display = '';
+        msg.style.color   = 'rgba(255,68,0,0.8)';
+        msg.textContent   = 'Code not recognised.';
+      }
+      updateButtonText();
+    }
 
     function showState(id) {
       document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
@@ -712,8 +804,14 @@
       document.querySelector('.spots-desc p').innerHTML = left === 0
         ? 'All spots are taken. Join the waitlist — <strong>you\'ll be first in if someone drops out.</strong>'
         : 'First come. First served. <strong>No exceptions.</strong>';
-      document.getElementById('submitBtn').textContent = left === 0 ? 'Join the Waitlist →' : 'Claim Your Spot →';
       document.querySelector('.section-title').innerHTML = left === 0 ? 'Join the<br>Waitlist.' : 'Claim Your<br>Spot.';
+      sessionIsFull = left === 0;
+
+      // Show promo section only for paid sessions
+      const promoSection = document.getElementById('promoSection');
+      if (promoSection) promoSection.style.display = (data.price > 0) ? '' : 'none';
+
+      updateButtonText();
     }
 
     async function loadSession() {
@@ -758,6 +856,8 @@
 
       if (sessionPrice > 0) {
         // Paid session — redirect to Stripe Checkout
+        const promoCode     = promoApplied ? 'SBBMEMBER' : '';
+        const finalAmount   = promoApplied ? 600 : Math.round(sessionPrice * 100);
         try {
           const res = await fetch('/api/create-checkout', {
             method: 'POST',
@@ -769,20 +869,21 @@
               sessionDate: sessionData?.date || '',
               sessionTime: sessionData?.time || '',
               sessionLocation: sessionData?.location || '',
-              amount: Math.round(sessionPrice * 100)
+              amount: finalAmount,
+              promoCode
             })
           });
           const data = await res.json();
           if (data.url) {
             window.location.href = data.url;
           } else {
-            btn.textContent = 'Claim Your Spot →';
-            btn.disabled    = false;
+            updateButtonText();
+            btn.disabled = false;
             alert('Payment setup failed. Please try again.');
           }
         } catch(err) {
-          btn.textContent = 'Claim Your Spot →';
-          btn.disabled    = false;
+          updateButtonText();
+          btn.disabled = false;
           alert('Connection error. Please try again.');
         }
         return;
@@ -806,17 +907,17 @@
           localStorage.removeItem('dyt_sessions');
           showState('stateWaitlist');
         } else if (data.status === 'not_open') {
-          btn.textContent = 'Claim Your Spot →';
-          btn.disabled    = false;
+          updateButtonText();
+          btn.disabled = false;
           alert(data.message || 'Sign-ups open soon!');
         } else {
-          btn.textContent = 'Claim Your Spot →';
-          btn.disabled    = false;
+          updateButtonText();
+          btn.disabled = false;
           alert(data.message || 'Something went wrong. Please try again.');
         }
       } catch(err) {
-        btn.textContent = 'Claim Your Spot →';
-        btn.disabled    = false;
+        updateButtonText();
+        btn.disabled = false;
         alert('Connection error. Please try again.');
       }
     }
